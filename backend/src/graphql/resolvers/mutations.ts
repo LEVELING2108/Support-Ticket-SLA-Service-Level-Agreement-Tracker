@@ -1,5 +1,8 @@
 import { MutationResolvers } from '../generated/graphql';
 import { AuthService } from '../../services/auth/authService';
+import { TicketService } from '../../services/ticket/ticketService';
+import { requireAuth, requireAgent } from '../../auth/guards';
+import { Priority, TicketStatus } from '@prisma/client';
 
 export const mutationResolvers: MutationResolvers = {
   register: async (_parent, args, context) => {
@@ -24,28 +27,73 @@ export const mutationResolvers: MutationResolvers = {
     );
   },
 
-  createTicket: async () => {
-    // Implemented in Phase 6
-    throw new Error('Not implemented yet');
+  createTicket: async (_parent, args, context) => {
+    const user = requireAuth(context);
+    const ticket = await TicketService.createTicket(
+      {
+        title: args.title,
+        description: args.description,
+        priority: args.priority as Priority,
+      },
+      user,
+      context.prisma,
+    );
+    return ticket as unknown as import('../generated/graphql').Ticket;
   },
 
-  assignTicket: async () => {
-    // Implemented in Phase 6
-    throw new Error('Not implemented yet');
+  assignTicket: async (_parent, args, context) => {
+    requireAgent(context);
+    const ticket = await TicketService.assignTicket(
+      args.ticketId,
+      args.assigneeId,
+      context.prisma,
+    );
+    return ticket as unknown as import('../generated/graphql').Ticket;
   },
 
-  changeTicketStatus: async () => {
-    // Implemented in Phase 6
-    throw new Error('Not implemented yet');
+  changeTicketStatus: async (_parent, args, context) => {
+    requireAgent(context);
+    const ticket = await TicketService.changeTicketStatus(
+      args.ticketId,
+      args.status as TicketStatus,
+      context.prisma,
+    );
+    return ticket as unknown as import('../generated/graphql').Ticket;
   },
 
-  addComment: async () => {
-    // Implemented in Phase 6
-    throw new Error('Not implemented yet');
+  addComment: async (_parent, args, context) => {
+    const user = requireAuth(context);
+    const comment = await TicketService.addComment(
+      {
+        ticketId: args.ticketId,
+        content: args.content,
+      },
+      user,
+      context.prisma,
+    );
+
+    const author = await context.prisma.user.findUniqueOrThrow({
+      where: { id: comment.authorId },
+    });
+
+    return {
+      id: comment.id,
+      content: comment.content,
+      ticketId: comment.ticketId,
+      createdAt: comment.createdAt.toISOString(),
+      author: {
+        id: author.id,
+        email: author.email,
+        name: author.name,
+        role: author.role,
+        createdAt: author.createdAt.toISOString(),
+      },
+    };
   },
 
-  resolveTicket: async () => {
-    // Implemented in Phase 6
-    throw new Error('Not implemented yet');
+  resolveTicket: async (_parent, args, context) => {
+    requireAgent(context);
+    const ticket = await TicketService.resolveTicket(args.ticketId, context.prisma);
+    return ticket as unknown as import('../generated/graphql').Ticket;
   },
 };
