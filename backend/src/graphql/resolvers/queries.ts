@@ -1,5 +1,7 @@
 import { QueryResolvers } from '../generated/graphql';
 import { requireAuth } from '../../auth/guards';
+import { computeSLAInfo } from '../../services/sla/slaEngine';
+import { TicketStatus, SLAState, Prisma } from '@prisma/client';
 
 export const queryResolvers: QueryResolvers = {
   me: async (_parent, _args, context) => {
@@ -64,28 +66,155 @@ export const queryResolvers: QueryResolvers = {
     if (!ticket) {
       return null;
     }
-    // Ticket field resolvers handle SLA and associations
     return ticket as unknown as import('../generated/graphql').Ticket;
   },
 
-  tickets: async () => {
-    // Implemented fully in Phase 7
+  tickets: async (_parent, args, context) => {
+    requireAuth(context);
+
+    const take = Math.min(Math.max(args.take || 10, 1), 50);
+    const whereClause: Prisma.TicketWhereInput = {};
+
+    if (args.status) {
+      whereClause.status = args.status;
+    }
+    if (args.priority) {
+      whereClause.priority = args.priority;
+    }
+    if (args.assigneeId) {
+      whereClause.assigneeId = args.assigneeId;
+    }
+
+    if (args.slaState) {
+      const holidays = await context.prisma.holiday.findMany();
+      const holidayItems = holidays.map((h) => ({ date: h.date, name: h.name }));
+
+      const allMatching = await context.prisma.ticket.findMany({
+        where: whereClause,
+        include: {
+          reporter: true,
+          assignee: true,
+          comments: { include: { author: true }, orderBy: { createdAt: 'asc' } },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      });
+
+      const filtered = allMatching.filter((t) => {
+        const sla = computeSLAInfo(
+          {
+            createdAt: t.createdAt,
+            priority: t.priority,
+            firstResponseAt: t.firstResponseAt,
+            resolvedAt: t.resolvedAt,
+          },
+          holidayItems,
+        );
+        return sla.firstResponseState === args.slaState || sla.resolutionState === args.slaState;
+      });
+
+      let startIndex = 0;
+      if (args.cursor) {
+        const cursorIndex = filtered.findIndex((t) => t.id === args.cursor);
+        if (cursorIndex >= 0) {
+          startIndex = cursorIndex + 1;
+        }
+      }
+
+      const paged = filtered.slice(startIndex, startIndex + take);
+      const hasNextPage = startIndex + take < filtered.length;
+      const endCursor = paged.length > 0 ? (paged[paged.length - 1]?.id ?? null) : null;
+
+      return {
+        nodes: paged as unknown as import('../generated/graphql').Ticket[],
+        pageInfo: {
+          hasNextPage,
+          endCursor,
+        },
+      };
+    }
+
+    const queryOptions: Prisma.TicketFindManyArgs = {
+      where: whereClause,
+      take: take + 1,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      include: {
+        reporter: true,
+        assignee: true,
+        comments: { include: { author: true }, orderBy: { createdAt: 'asc' } },
+      },
+    };
+
+    if (args.cursor) {
+      queryOptions.cursor = { id: args.cursor };
+      queryOptions.skip = 1;
+    }
+
+    const tickets = await context.prisma.ticket.findMany(queryOptions);
+    const hasNextPage = tickets.length > take;
+    const nodes = hasNextPage ? tickets.slice(0, take) : tickets;
+    const endCursor = nodes.length > 0 ? (nodes[nodes.length - 1]?.id ?? null) : null;
+
     return {
-      nodes: [],
+      nodes: nodes as unknown as import('../generated/graphql').Ticket[],
       pageInfo: {
-        hasNextPage: false,
-        endCursor: null,
+        hasNextPage,
+        endCursor,
       },
     };
   },
 
-  dashboard: async () => {
-    // Implemented fully in Phase 7
+  dashboard: async (_parent, _args, context) => {
+    requireAuth(context);
+
+    const [openTickets, inProgressTickets, holidays, activeTickets] = await Promise.all([
+      context.prisma.ticket.count({ where: { status: TicketStatus.OPEN } }),
+      context.prisma.ticket.count({ where: { status: TicketStatus.IN_PROGRESS } }),
+      context.prisma.holiday.findMany(),
+      context.prisma.ticket.findMany({
+        where: {
+          status: { in: [TicketStatus.OPEN, TicketStatus.IN_PROGRESS] },
+        },
+        select: {
+          createdAt: true,
+          priority: true,
+          firstResponseAt: true,
+          resolvedAt: true,
+        },
+      }),
+    ]);
+
+    const holidayItems = holidays.map((h) => ({ date: h.date, name: h.name }));
+    let atRiskTickets = 0;
+    let breachedTickets = 0;
+
+    for (const ticket of activeTickets) {
+      const sla = computeSLAInfo(
+        {
+          createdAt: ticket.createdAt,
+          priority: ticket.priority,
+          firstResponseAt: ticket.firstResponseAt,
+          resolvedAt: ticket.resolvedAt,
+        },
+        holidayItems,
+      );
+
+      const isBreached =
+        sla.firstResponseState === SLAState.BREACHED || sla.resolutionState === SLAState.BREACHED;
+      const isAtRisk =
+        sla.firstResponseState === SLAState.AT_RISK || sla.resolutionState === SLAState.AT_RISK;
+
+      if (isBreached) {
+        breachedTickets++;
+      } else if (isAtRisk) {
+        atRiskTickets++;
+      }
+    }
+
     return {
-      openTickets: 0,
-      inProgressTickets: 0,
-      atRiskTickets: 0,
-      breachedTickets: 0,
+      openTickets,
+      inProgressTickets,
+      atRiskTickets,
+      breachedTickets,
     };
   },
 };
