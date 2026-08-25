@@ -32,10 +32,9 @@ describe('Real PostgreSQL Integration Flow', () => {
   });
 
   afterAll(async () => {
-    await prisma.comment.deleteMany();
-    await prisma.ticket.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.holiday.deleteMany();
+    // Re-seed standard development data after test suite finishes
+    const { main: seedDatabase } = await import('../../prisma/seed');
+    await seedDatabase();
     await prisma.$disconnect();
   });
 
