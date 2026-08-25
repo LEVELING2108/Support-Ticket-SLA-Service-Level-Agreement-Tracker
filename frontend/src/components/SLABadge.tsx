@@ -1,11 +1,5 @@
 import React from 'react';
 import { SLAState } from '../types';
-import {
-  SLAOnTrackIcon,
-  SLAAtRiskIcon,
-  SLABreachedIcon,
-  BusinessClockIcon,
-} from './icons/CustomIcons';
 
 interface SLABadgeProps {
   state: SLAState;
@@ -29,54 +23,55 @@ export const SLABadge: React.FC<SLABadgeProps> = ({
     return `${hours}h ${mins}m`;
   };
 
-  const getBadgeStyle = () => {
+  const getStyle = () => {
     switch (state) {
       case 'ON_TRACK':
         return {
-          bg: 'bg-emerald-50 text-emerald-800 border-emerald-200/90 shadow-2xs',
-          icon: <SLAOnTrackIcon className="w-4 h-4 shrink-0" />,
-          text: 'On Track',
+          dot: 'bg-emerald-500',
+          text: 'text-emerald-700',
+          bg: 'bg-emerald-50/60 border-emerald-200/50',
+          label: 'On Track',
         };
       case 'AT_RISK':
         return {
-          bg: 'bg-amber-50 text-amber-800 border-amber-200/90 shadow-2xs',
-          icon: <SLAAtRiskIcon className="w-4 h-4 shrink-0" />,
-          text: 'At Risk',
+          dot: 'bg-amber-500 animate-pulse',
+          text: 'text-amber-700',
+          bg: 'bg-amber-50/60 border-amber-200/50',
+          label: 'At Risk',
         };
       case 'BREACHED':
         return {
-          bg: 'bg-rose-50 text-rose-800 border-rose-200/90 shadow-2xs',
-          icon: <SLABreachedIcon className="w-4 h-4 shrink-0" />,
-          text: 'Breached',
+          dot: 'bg-rose-500',
+          text: 'text-rose-700',
+          bg: 'bg-rose-50/60 border-rose-200/50',
+          label: 'Breached',
         };
       default:
         return {
-          bg: 'bg-slate-50 text-slate-700 border-slate-200 shadow-2xs',
-          icon: <BusinessClockIcon className="w-4 h-4 shrink-0 text-slate-500" />,
-          text: state,
+          dot: 'bg-slate-400',
+          text: 'text-slate-600',
+          bg: 'bg-slate-50 border-slate-200/60',
+          label: state,
         };
     }
   };
 
-  const style = getBadgeStyle();
+  const style = getStyle();
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${style.bg}`}
-      title={label ? `${label}: ${style.text}` : style.text}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium border ${style.bg}`}
     >
-      {style.icon}
-      {label && <span className="text-slate-500 font-normal">{label}:</span>}
-      <span className="font-bold tracking-tight">{style.text}</span>
+      <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`}></span>
+      {label && <span className="text-slate-400 font-normal">{label}:</span>}
+      <span className={`font-semibold ${style.text}`}>{style.label}</span>
       {!isCompleted && remainingMinutes !== undefined && remainingMinutes > 0 && (
-        <span className="ml-1 px-1.5 py-0.5 rounded-md bg-white text-[11px] font-bold text-slate-800 border border-slate-200 shadow-2xs">
-          {formatMinutes(remainingMinutes)} left
+        <span className="text-slate-500 font-mono text-[10px] ml-0.5 font-normal">
+          ({formatMinutes(remainingMinutes)})
         </span>
       )}
       {isCompleted && (
-        <span className="ml-1 text-[10px] uppercase font-black tracking-wider text-emerald-600 bg-emerald-100/60 px-1 py-0.5 rounded">
-          MET
-        </span>
+        <span className="text-emerald-600 font-mono text-[10px] ml-0.5 font-bold">✓</span>
       )}
     </div>
   );
