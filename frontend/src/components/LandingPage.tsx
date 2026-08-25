@@ -33,9 +33,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard, onOp
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-stone-900 flex flex-col font-sans antialiased selection:bg-stone-200">
+    <div className="min-h-screen bg-[#fafafa] text-stone-900 flex flex-col justify-between font-sans antialiased selection:bg-stone-200">
       {/* Top Floating Nav */}
-      <header className="w-full max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
+      <header className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <BrandIcon className="w-7 h-7" />
           <span className="text-sm font-bold text-stone-900 tracking-tight">Burdenoff</span>
@@ -59,27 +59,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard, onOp
         </div>
       </header>
 
-      {/* Ultra-Minimal Hero Section */}
-      <main className="flex-1 max-w-4xl mx-auto px-6 pt-16 pb-20 flex flex-col items-center text-center space-y-8">
-        {/* Subtle Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 border border-stone-200/70 shadow-2xs">
-          <Sparkles className="w-3 h-3 text-amber-600" />
-          <span className="text-xs font-medium text-stone-600">
+      {/* Hero Section — Perfectly Proportioned within Screen Height */}
+      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col items-center text-center space-y-6 flex-1 justify-center">
+        {/* Subtle Pill */}
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 border border-stone-200/80 shadow-2xs">
+          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+          <span className="text-xs font-semibold text-stone-700">
             Mon–Fri 09:00–18:00 · Timezone: Asia/Kolkata
           </span>
         </div>
 
-        {/* Heading */}
-        <div className="space-y-3">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-950 tracking-tight max-w-2xl mx-auto leading-tight">
+        {/* Heading & Subtitle */}
+        <div className="space-y-3 max-w-2xl">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-950 tracking-tight leading-[1.15]">
             Support ticketing with true business-hours SLA tracking.
           </h1>
-          <p className="text-sm sm:text-base text-stone-500 max-w-lg mx-auto font-normal leading-relaxed">
-            Zero SLA penalties during nights, weekends, or public holidays. Accurate business-minute countdowns with milestone clock freezing.
+          <p className="text-xs sm:text-sm text-stone-500 max-w-lg mx-auto font-normal leading-relaxed">
+            Zero SLA penalties during nights, weekends, or public holidays. Accurate business-minute countdowns with automatic milestone clock freezing.
           </p>
         </div>
 
-        {/* Primary Action & Quick Persona Launch */}
+        {/* Action Triggers */}
         <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
           <button
             onClick={onEnterDashboard}
@@ -91,7 +91,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard, onOp
 
           <button
             onClick={() => handleQuickLogin('AGENT')}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-purple-800 font-semibold text-xs border border-stone-200 transition-all shadow-2xs active:scale-95 flex items-center justify-center gap-1.5"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-purple-800 font-semibold text-xs border border-stone-200/90 transition-all shadow-2xs active:scale-95 flex items-center justify-center gap-1.5"
           >
             <AgentRoleIcon className="w-3.5 h-3.5" />
             <span>Enter as Agent</span>
@@ -99,16 +99,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard, onOp
 
           <button
             onClick={() => handleQuickLogin('REPORTER')}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-stone-700 font-semibold text-xs border border-stone-200 transition-all shadow-2xs active:scale-95 flex items-center justify-center gap-1.5"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-stone-700 font-semibold text-xs border border-stone-200/90 transition-all shadow-2xs active:scale-95 flex items-center justify-center gap-1.5"
           >
             <ReporterRoleIcon className="w-3.5 h-3.5" />
             <span>Enter as Reporter</span>
           </button>
         </div>
 
-        {/* Minimal 3-Point Feature Strip */}
-        <div className="w-full pt-12 border-t border-stone-200/60 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-          <div className="p-4 rounded-xl bg-white border border-stone-200/70 space-y-1">
+        {/* 3-Point Compact Feature Grid */}
+        <div className="w-full pt-8 border-t border-stone-200/60 grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-left max-w-3xl">
+          <div className="p-3.5 rounded-xl bg-white border border-stone-200/70 shadow-2xs space-y-1">
             <span className="text-[10px] font-mono font-bold text-stone-400">01</span>
             <h4 className="text-xs font-bold text-stone-900">09:00 – 18:00 Window</h4>
             <p className="text-[11px] text-stone-500 leading-relaxed font-normal">
@@ -116,7 +116,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard, onOp
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-white border border-stone-200/70 space-y-1">
+          <div className="p-3.5 rounded-xl bg-white border border-stone-200/70 shadow-2xs space-y-1">
             <span className="text-[10px] font-mono font-bold text-stone-400">02</span>
             <h4 className="text-xs font-bold text-stone-900">Milestone Clock Freeze</h4>
             <p className="text-[11px] text-stone-500 leading-relaxed font-normal">
@@ -124,7 +124,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard, onOp
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-white border border-stone-200/70 space-y-1">
+          <div className="p-3.5 rounded-xl bg-white border border-stone-200/70 shadow-2xs space-y-1">
             <span className="text-[10px] font-mono font-bold text-stone-400">03</span>
             <h4 className="text-xs font-bold text-stone-900">Authoritative API</h4>
             <p className="text-[11px] text-stone-500 leading-relaxed font-normal">
@@ -135,8 +135,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard, onOp
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-stone-200/60 py-4 text-center text-xs text-stone-400 font-normal">
-        Burdenoff · Business Hours SLA Engine · GraphQL Yoga
+      <footer className="border-t border-stone-200/60 py-3 text-center text-xs text-stone-400 font-normal">
+        Burdenoff · Precision Business Hours SLA Engine · GraphQL Yoga
       </footer>
     </div>
   );

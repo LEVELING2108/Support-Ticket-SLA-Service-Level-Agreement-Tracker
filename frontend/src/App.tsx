@@ -69,12 +69,12 @@ const MainAppContent: React.FC = () => {
             onOpenAuth={() => setIsAuthModalOpen(true)}
           />
 
-          <main className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1">
+          <main className="w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 flex-1">
             {/* Full-width Top Metadata Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200/70 pb-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200/70 pb-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
+                  <h1 className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">
                     Support Ticket SLA Center
                   </h1>
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 shadow-2xs">
@@ -82,12 +82,12 @@ const MainAppContent: React.FC = () => {
                     Engine Active
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-stone-500 font-normal">
+                <p className="text-xs text-stone-500 font-normal">
                   SLA clocks count business hours only (Mon–Fri, 09:00–18:00) · Nights, weekends, and holidays excluded
                 </p>
               </div>
 
-              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-stone-600 font-medium flex-wrap">
+              <div className="flex items-center gap-2.5 text-xs text-stone-600 font-medium flex-wrap">
                 <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-stone-200 shadow-2xs">
                   <Globe className="w-3.5 h-3.5 text-stone-400" />
                   <span>Zone: <strong>Asia/Kolkata</strong></span>
@@ -104,7 +104,7 @@ const MainAppContent: React.FC = () => {
 
             {/* Guest Banner */}
             {!isAuthenticated && (
-              <div className="px-4 py-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-amber-900 text-xs sm:text-sm flex items-center justify-between gap-3 shadow-2xs animate-in fade-in duration-300">
+              <div className="px-4 py-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-amber-900 text-xs flex items-center justify-between gap-3 shadow-2xs animate-in fade-in duration-300">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>
@@ -114,7 +114,7 @@ const MainAppContent: React.FC = () => {
                 </div>
                 <button
                   onClick={() => setIsAuthModalOpen(true)}
-                  className="text-xs sm:text-sm text-amber-950 font-bold underline hover:text-black shrink-0 active:scale-95 transition-transform"
+                  className="text-xs text-amber-950 font-bold underline hover:text-black shrink-0 active:scale-95 transition-transform"
                 >
                   Sign In
                 </button>
@@ -131,9 +131,9 @@ const MainAppContent: React.FC = () => {
             />
 
             {/* Full-width Ticket List */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <h2 className="text-xs sm:text-sm font-bold text-stone-400 uppercase tracking-wider">
+                <h2 className="text-xs font-bold text-stone-400 uppercase tracking-wider">
                   Tickets &amp; SLA Milestones
                 </h2>
               </div>
@@ -149,8 +149,8 @@ const MainAppContent: React.FC = () => {
             </div>
           </main>
 
-          <footer className="border-t border-stone-200/70 py-5 text-center text-xs text-stone-400 font-normal w-full">
-            Burdenoff · Precision Business Hours SLA Engine · Crafted with care
+          <footer className="border-t border-stone-200/70 py-4 text-center text-xs text-stone-400 font-normal w-full">
+            Burdenoff · Business Hours SLA Engine · Crafted with care
           </footer>
         </>
       )}
