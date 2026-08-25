@@ -45,7 +45,7 @@ const DashboardContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafa] flex flex-col font-sans text-slate-900 selection:bg-slate-200">
+    <div className="min-h-screen bg-[#fafafa] flex flex-col font-sans text-slate-900 selection:bg-slate-200 w-full">
       <Navbar
         onOpenCreateTicket={() => {
           if (!isAuthenticated) {
@@ -57,26 +57,26 @@ const DashboardContent: React.FC = () => {
         onOpenAuth={() => setIsAuthModalOpen(true)}
       />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 w-full space-y-6 flex-1">
-        {/* Subtle Minimal Metadata Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-4">
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1">
+        {/* Full-width Top Metadata Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/70 pb-4">
           <div>
-            <h1 className="text-base font-bold text-slate-900 tracking-tight">Support Tickets</h1>
+            <h1 className="text-lg font-bold text-slate-900 tracking-tight">Support Ticket Dashboard</h1>
             <p className="text-xs text-slate-500">
-              SLA clocks count business hours only (Mon–Fri, 09:00–18:00)
+              Real-time business-hours SLA engine · Nights, weekends, and holidays excluded
             </p>
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-md border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center gap-2.5 text-xs text-slate-600 font-medium">
+            <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
               <Globe className="w-3.5 h-3.5 text-slate-400" />
-              <span>Asia/Kolkata</span>
+              <span>Timezone: <strong>Asia/Kolkata</strong> (09:00–18:00)</span>
             </div>
 
             {holidaysData?.holidays && holidaysData.holidays.length > 0 && (
-              <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-md border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>{holidaysData.holidays.length} Holiday</span>
+                <span>{holidaysData.holidays.length} Configured Holiday(s)</span>
               </div>
             )}
           </div>
@@ -84,9 +84,9 @@ const DashboardContent: React.FC = () => {
 
         {/* Guest Banner (Minimal) */}
         {!isAuthenticated && (
-          <div className="px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-600 text-xs flex items-center justify-between gap-3">
+          <div className="px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs flex items-center justify-between gap-3 shadow-2xs">
             <span>
-              Signed out. Login as <strong className="text-slate-800 font-semibold">agent@example.com</strong> or{' '}
+              Signed out. Log in as <strong className="text-slate-800 font-semibold">agent@example.com</strong> or{' '}
               <strong className="text-slate-800 font-semibold">reporter@example.com</strong> (<code>password123</code>).
             </span>
             <button
@@ -98,7 +98,7 @@ const DashboardContent: React.FC = () => {
           </div>
         )}
 
-        {/* Dashboard Stat Counters */}
+        {/* Full-width Stat Counters */}
         <DashboardCards
           dashboard={dashboardData?.dashboard ?? null}
           loading={dashboardFetching}
@@ -107,15 +107,23 @@ const DashboardContent: React.FC = () => {
           activeSLAState={slaStateFilter}
         />
 
-        {/* Ticket List */}
-        <TicketList
-          onSelectTicket={(id) => setSelectedTicketId(id)}
-          statusFilter={statusFilter}
-          slaStateFilter={slaStateFilter}
-          onStatusFilterChange={setStatusFilter}
-          onSLAStateFilterChange={setSLAStateFilter}
-          refreshTrigger={refreshKey}
-        />
+        {/* Full-width Ticket List */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider text-[11px] text-slate-500">
+              All Tickets &amp; SLA Milestones
+            </h2>
+          </div>
+
+          <TicketList
+            onSelectTicket={(id) => setSelectedTicketId(id)}
+            statusFilter={statusFilter}
+            slaStateFilter={slaStateFilter}
+            onStatusFilterChange={setStatusFilter}
+            onSLAStateFilterChange={setSLAStateFilter}
+            refreshTrigger={refreshKey}
+          />
+        </div>
       </main>
 
       {/* Modals */}
@@ -133,7 +141,7 @@ const DashboardContent: React.FC = () => {
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
-      <footer className="border-t border-slate-200/60 py-4 text-center text-xs text-slate-400 font-normal">
+      <footer className="border-t border-slate-200/70 py-4 text-center text-xs text-slate-400 font-normal w-full">
         Burdenoff · Business Hours SLA Engine · GraphQL Yoga
       </footer>
     </div>

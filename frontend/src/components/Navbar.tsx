@@ -12,10 +12,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateTicket, onOpenAuth }
   const { user, isAuthenticated, isAgent, logout } = useAuth();
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-slate-200/70 sticky top-0 z-30">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+    <header className="w-full bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30">
+      <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <BrandIcon className="w-7 h-7" />
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-slate-900 tracking-tight">Burdenoff</span>
@@ -24,12 +24,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateTicket, onOpenAuth }
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
               <button
                 onClick={onOpenCreateTicket}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-2xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>New Ticket</span>
@@ -37,7 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateTicket, onOpenAuth }
 
               <div className="h-4 w-px bg-slate-200 mx-1"></div>
 
-              <div className="flex items-center gap-2 pl-1">
+              <div className="flex items-center gap-2.5 pl-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-medium text-slate-700">{user?.name}</span>
                   <span
@@ -54,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateTicket, onOpenAuth }
                 <button
                   onClick={logout}
                   title="Sign out"
-                  className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition ml-1"
+                  className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                 </button>
@@ -63,7 +63,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateTicket, onOpenAuth }
           ) : (
             <button
               onClick={onOpenAuth}
-              className="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition"
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition"
             >
               Sign In
             </button>
