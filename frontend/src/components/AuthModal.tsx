@@ -3,7 +3,7 @@ import { useMutation } from 'urql';
 import { LOGIN_MUTATION, REGISTER_MUTATION } from '../graphql/operations';
 import { useAuth } from '../context/useAuth';
 import { UserRole, AuthPayload } from '../types';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, KeyRound, UserCheck } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -24,6 +24,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
+
+  const fillCredentials = (demoEmail: string, demoRole: UserRole) => {
+    setIsRegister(false);
+    setEmail(demoEmail);
+    setPassword('password123');
+    setRole(demoRole);
+    setErrorMessage(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +59,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         }
       } else {
         const result = await executeLogin({
-          email,
+          email: email.trim().toLowerCase(),
           password,
         });
 
@@ -77,7 +85,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
       <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 relative border border-slate-200/80 animate-in fade-in zoom-in duration-100">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-slate-900">
             {isRegister ? 'Create an Account' : 'Sign in to Burdenoff'}
           </h2>
@@ -88,6 +96,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Quick Demo Fill Buttons */}
+        {!isRegister && (
+          <div className="mb-4 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              Quick Fill Demo Logins
+            </span>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={() => fillCredentials('agent@example.com', 'AGENT')}
+                className="px-2 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 text-xs font-semibold flex items-center justify-center gap-1 transition shadow-2xs"
+              >
+                <UserCheck className="w-3 h-3" />
+                <span>Agent</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => fillCredentials('reporter@example.com', 'REPORTER')}
+                className="px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold flex items-center justify-center gap-1 transition shadow-2xs"
+              >
+                <KeyRound className="w-3 h-3" />
+                <span>Reporter</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {errorMessage && (
           <div className="mb-3 p-2.5 rounded-lg bg-rose-50 border border-rose-200/60 text-rose-700 text-xs flex items-center gap-2">
