@@ -8,21 +8,21 @@ export const StatusBadge: React.FC<{ status: TicketStatus }> = ({ status }) => {
         return {
           dot: 'bg-sky-500',
           text: 'text-sky-700',
-          bg: 'bg-sky-50/50 border-sky-200/50',
+          bg: 'bg-sky-50/60 border-sky-200/60',
           label: 'Open',
         };
       case 'IN_PROGRESS':
         return {
           dot: 'bg-indigo-500',
           text: 'text-indigo-700',
-          bg: 'bg-indigo-50/50 border-indigo-200/50',
+          bg: 'bg-indigo-50/60 border-indigo-200/60',
           label: 'In Progress',
         };
       case 'RESOLVED':
         return {
           dot: 'bg-emerald-500',
           text: 'text-emerald-700',
-          bg: 'bg-emerald-50/50 border-emerald-200/50',
+          bg: 'bg-emerald-50/60 border-emerald-200/60',
           label: 'Resolved',
         };
       case 'CLOSED':
@@ -46,7 +46,7 @@ export const StatusBadge: React.FC<{ status: TicketStatus }> = ({ status }) => {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium border ${style.bg}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold border ${style.bg}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`}></span>
       <span className={style.text}>{style.label}</span>

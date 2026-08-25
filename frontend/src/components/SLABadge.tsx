@@ -29,28 +29,28 @@ export const SLABadge: React.FC<SLABadgeProps> = ({
         return {
           dot: 'bg-emerald-500',
           text: 'text-emerald-700',
-          bg: 'bg-emerald-50/60 border-emerald-200/50',
+          bg: 'bg-emerald-50/70 border-emerald-200/60',
           label: 'On Track',
         };
       case 'AT_RISK':
         return {
           dot: 'bg-amber-500 animate-pulse',
           text: 'text-amber-700',
-          bg: 'bg-amber-50/60 border-amber-200/50',
+          bg: 'bg-amber-50/70 border-amber-200/60',
           label: 'At Risk',
         };
       case 'BREACHED':
         return {
           dot: 'bg-rose-500',
           text: 'text-rose-700',
-          bg: 'bg-rose-50/60 border-rose-200/50',
+          bg: 'bg-rose-50/70 border-rose-200/60',
           label: 'Breached',
         };
       default:
         return {
           dot: 'bg-slate-400',
           text: 'text-slate-600',
-          bg: 'bg-slate-50 border-slate-200/60',
+          bg: 'bg-slate-50 border-slate-200',
           label: state,
         };
     }
@@ -60,18 +60,18 @@ export const SLABadge: React.FC<SLABadgeProps> = ({
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium border ${style.bg}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${style.bg} transition-all`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`}></span>
-      {label && <span className="text-slate-400 font-normal">{label}:</span>}
+      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${style.dot}`}></span>
+      {label && <span className="text-slate-400 font-normal hidden sm:inline">{label}:</span>}
       <span className={`font-semibold ${style.text}`}>{style.label}</span>
       {!isCompleted && remainingMinutes !== undefined && remainingMinutes > 0 && (
-        <span className="text-slate-500 font-mono text-[10px] ml-0.5 font-normal">
+        <span className="text-slate-600 font-mono text-[11px] ml-0.5 font-medium">
           ({formatMinutes(remainingMinutes)})
         </span>
       )}
       {isCompleted && (
-        <span className="text-emerald-600 font-mono text-[10px] ml-0.5 font-bold">✓</span>
+        <span className="text-emerald-600 font-mono text-xs ml-0.5 font-bold">✓</span>
       )}
     </div>
   );

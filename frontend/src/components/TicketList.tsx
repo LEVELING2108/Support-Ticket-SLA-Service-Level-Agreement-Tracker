@@ -78,18 +78,18 @@ export const TicketList: React.FC<TicketListProps> = ({
     !!statusFilter || !!slaStateFilter || !!priorityFilter || !!assigneeFilter || !!searchQuery;
 
   return (
-    <div className="w-full bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+    <div className="w-full bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
       {/* Search & Filter Strip */}
-      <div className="p-3.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-4 sm:p-4.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 flex-1 min-w-[280px]">
           <div className="relative flex-1 max-w-sm">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search tickets by title, reporter, or assignee..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-slate-400 bg-white"
+              placeholder="Search by title, reporter, or assignee..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-slate-400 bg-white shadow-2xs"
             />
           </div>
 
@@ -99,7 +99,7 @@ export const TicketList: React.FC<TicketListProps> = ({
             onChange={(e) =>
               onStatusFilterChange((e.target.value as TicketStatus) || undefined)
             }
-            className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 focus:outline-none focus:border-slate-400 bg-white font-medium"
+            className="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-slate-400 bg-white font-medium shadow-2xs cursor-pointer"
           >
             <option value="">Status: All</option>
             <option value="OPEN">Open</option>
@@ -114,7 +114,7 @@ export const TicketList: React.FC<TicketListProps> = ({
             onChange={(e) =>
               setPriorityFilter((e.target.value as Priority) || undefined)
             }
-            className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 focus:outline-none focus:border-slate-400 bg-white font-medium"
+            className="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-slate-400 bg-white font-medium shadow-2xs cursor-pointer"
           >
             <option value="">Priority: All</option>
             <option value="URGENT">Urgent</option>
@@ -129,7 +129,7 @@ export const TicketList: React.FC<TicketListProps> = ({
             onChange={(e) =>
               onSLAStateFilterChange((e.target.value as SLAState) || undefined)
             }
-            className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 focus:outline-none focus:border-slate-400 bg-white font-medium"
+            className="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-slate-400 bg-white font-medium shadow-2xs cursor-pointer"
           >
             <option value="">SLA: All</option>
             <option value="ON_TRACK">On Track</option>
@@ -141,7 +141,7 @@ export const TicketList: React.FC<TicketListProps> = ({
           <select
             value={assigneeFilter || ''}
             onChange={(e) => setAssigneeFilter(e.target.value || undefined)}
-            className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 focus:outline-none focus:border-slate-400 bg-white font-medium hidden md:inline-block"
+            className="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-slate-400 bg-white font-medium shadow-2xs cursor-pointer hidden md:inline-block"
           >
             <option value="">Assignee: All</option>
             {agentsData?.users.map((agent) => (
@@ -155,9 +155,9 @@ export const TicketList: React.FC<TicketListProps> = ({
             <button
               onClick={clearFilters}
               title="Reset all filters"
-              className="text-xs text-slate-500 hover:text-slate-900 font-medium underline flex items-center gap-1 ml-1"
+              className="text-xs sm:text-sm text-slate-500 hover:text-slate-900 font-semibold underline flex items-center gap-1 ml-1"
             >
-              <X className="w-3 h-3" />
+              <X className="w-3.5 h-3.5" />
               Reset
             </button>
           )}
@@ -165,25 +165,25 @@ export const TicketList: React.FC<TicketListProps> = ({
 
         <button
           onClick={() => reexecuteQuery({ requestPolicy: 'network-only' })}
-          className="p-1.5 text-slate-400 hover:text-slate-700 transition rounded-md hover:bg-slate-50"
-          title="Refresh"
+          className="p-2 text-slate-400 hover:text-slate-700 transition rounded-lg hover:bg-slate-50 border border-slate-200/80 shadow-2xs"
+          title="Refresh table"
         >
-          <RotateCw className={`w-3.5 h-3.5 ${fetching ? 'animate-spin' : ''}`} />
+          <RotateCw className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
       {/* Error state */}
       {error && (
-        <div className="p-8 text-center text-xs text-rose-600">
+        <div className="p-8 text-center text-sm text-rose-600">
           Failed to load tickets: {error.message}
         </div>
       )}
 
       {/* Empty State */}
       {!fetching && filteredTickets.length === 0 && (
-        <div className="p-16 text-center text-slate-400 text-xs">
-          <p className="font-medium text-slate-600 text-sm">No tickets found</p>
-          <p className="mt-1 text-slate-400">
+        <div className="p-16 text-center text-slate-400 text-sm">
+          <p className="font-semibold text-slate-700 text-base">No tickets found</p>
+          <p className="mt-1 text-slate-400 text-xs sm:text-sm">
             {hasActiveFilters ? 'Try adjusting your filters.' : 'Click "New Ticket" to create your first ticket.'}
           </p>
         </div>
@@ -192,16 +192,16 @@ export const TicketList: React.FC<TicketListProps> = ({
       {/* Full-width Ticket Table View */}
       {filteredTickets.length > 0 && (
         <div className="overflow-x-auto w-full">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs sm:text-sm border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                <th className="py-2.5 px-4">Priority &amp; Status</th>
-                <th className="py-2.5 px-4">Ticket Details</th>
-                <th className="py-2.5 px-4 hidden md:table-cell">Reporter / Assignee</th>
-                <th className="py-2.5 px-4 text-center">First Response SLA</th>
-                <th className="py-2.5 px-4 text-center">Resolution SLA</th>
-                <th className="py-2.5 px-4 text-right hidden lg:table-cell">Created</th>
-                <th className="py-2.5 px-3 w-8"></th>
+              <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <th className="py-3 px-5">Priority &amp; Status</th>
+                <th className="py-3 px-5">Ticket Summary</th>
+                <th className="py-3 px-5 hidden md:table-cell">Reporter / Assignee</th>
+                <th className="py-3 px-5 text-center">First Response SLA</th>
+                <th className="py-3 px-5 text-center">Resolution SLA</th>
+                <th className="py-3 px-5 text-right hidden lg:table-cell">Created</th>
+                <th className="py-3 px-4 w-8"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -209,38 +209,38 @@ export const TicketList: React.FC<TicketListProps> = ({
                 <tr
                   key={ticket.id}
                   onClick={() => onSelectTicket(ticket.id)}
-                  className="hover:bg-slate-50/80 transition cursor-pointer group"
+                  className="hover:bg-slate-50/90 transition cursor-pointer group"
                 >
                   {/* Priority & Status */}
-                  <td className="py-3 px-4 align-middle whitespace-nowrap">
-                    <div className="flex items-center gap-1.5">
+                  <td className="py-3.5 px-5 align-middle whitespace-nowrap">
+                    <div className="flex items-center gap-2">
                       <PriorityBadge priority={ticket.priority} />
                       <StatusBadge status={ticket.status} />
                     </div>
                   </td>
 
                   {/* Title & Description */}
-                  <td className="py-3 px-4 align-middle max-w-md">
-                    <div className="font-semibold text-slate-900 group-hover:text-indigo-600 transition truncate">
+                  <td className="py-3.5 px-5 align-middle max-w-md">
+                    <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition text-sm sm:text-base truncate">
                       {ticket.title}
                     </div>
-                    <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                    <div className="text-xs text-slate-500 truncate mt-0.5 font-normal">
                       {ticket.description}
                     </div>
                   </td>
 
                   {/* Reporter / Assignee */}
-                  <td className="py-3 px-4 align-middle whitespace-nowrap hidden md:table-cell text-[11px] text-slate-500">
+                  <td className="py-3.5 px-5 align-middle whitespace-nowrap hidden md:table-cell text-xs text-slate-600">
                     <div>
-                      <span className="text-slate-400">By:</span> {ticket.reporter.name}
+                      <span className="text-slate-400">By:</span> <strong className="font-medium text-slate-800">{ticket.reporter.name}</strong>
                     </div>
-                    <div className="text-slate-600 font-medium">
-                      <span className="text-slate-400">To:</span> {ticket.assignee ? ticket.assignee.name : 'Unassigned'}
+                    <div className="text-slate-600 mt-0.5">
+                      <span className="text-slate-400">To:</span> <span className="font-medium">{ticket.assignee ? ticket.assignee.name : 'Unassigned'}</span>
                     </div>
                   </td>
 
                   {/* First Response SLA */}
-                  <td className="py-3 px-4 align-middle text-center whitespace-nowrap">
+                  <td className="py-3.5 px-5 align-middle text-center whitespace-nowrap">
                     <SLABadge
                       state={ticket.sla.firstResponseState}
                       remainingMinutes={ticket.sla.firstResponseRemainingMinutes}
@@ -249,7 +249,7 @@ export const TicketList: React.FC<TicketListProps> = ({
                   </td>
 
                   {/* Resolution SLA */}
-                  <td className="py-3 px-4 align-middle text-center whitespace-nowrap">
+                  <td className="py-3.5 px-5 align-middle text-center whitespace-nowrap">
                     <SLABadge
                       state={ticket.sla.resolutionState}
                       remainingMinutes={ticket.sla.resolutionRemainingMinutes}
@@ -258,13 +258,13 @@ export const TicketList: React.FC<TicketListProps> = ({
                   </td>
 
                   {/* Created Date */}
-                  <td className="py-3 px-4 align-middle text-right whitespace-nowrap text-[11px] text-slate-400 hidden lg:table-cell font-mono">
+                  <td className="py-3.5 px-5 align-middle text-right whitespace-nowrap text-xs text-slate-400 hidden lg:table-cell font-mono">
                     {format(new Date(ticket.createdAt), 'MMM d, h:mm a')}
                   </td>
 
                   {/* Arrow */}
-                  <td className="py-3 px-3 align-middle text-right">
-                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-600 transition" />
+                  <td className="py-3.5 px-4 align-middle text-right">
+                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-700 transition" />
                   </td>
                 </tr>
               ))}

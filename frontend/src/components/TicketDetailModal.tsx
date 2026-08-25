@@ -127,7 +127,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const formatTimestamp = (dateStr?: string | null) => {
     if (!dateStr) return 'N/A';
     try {
-      return format(new Date(dateStr), 'MMM d, h:mm a');
+      return format(new Date(dateStr), 'PPp');
     } catch {
       return dateStr;
     }
@@ -137,43 +137,43 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-xs">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col relative border border-slate-200/80 overflow-hidden animate-in fade-in zoom-in duration-100">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-start justify-between">
-          <div className="space-y-1 pr-6">
-            <div className="flex items-center gap-2 flex-wrap">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
+          <div className="space-y-1.5 pr-6">
+            <div className="flex items-center gap-2.5 flex-wrap">
               {ticket && <PriorityBadge priority={ticket.priority} />}
               {ticket && <StatusBadge status={ticket.status} />}
-              <span className="text-[11px] text-slate-400 font-mono">#{ticketId.slice(0, 8)}</span>
+              <span className="text-xs text-slate-400 font-mono">#{ticketId.slice(0, 8)}</span>
             </div>
-            <h2 className="text-base font-bold text-slate-900 leading-snug">
-              {ticket ? ticket.title : 'Loading ticket...'}
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
+              {ticket ? ticket.title : 'Loading ticket details...'}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-700 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Scrollable Body (Split Grid on wider screens) */}
-        <div className="p-6 overflow-y-auto space-y-5 flex-1 text-xs">
+        {/* Scrollable Body */}
+        <div className="p-6 overflow-y-auto space-y-6 flex-1 text-sm">
           {actionError && (
-            <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200/60 text-rose-700 flex items-center gap-2">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200/60 text-rose-700 text-xs sm:text-sm flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{actionError}</span>
             </div>
           )}
 
           {fetching && (
-            <div className="space-y-3 animate-pulse">
-              <div className="h-4 bg-slate-100 rounded w-1/3"></div>
-              <div className="h-20 bg-slate-50 rounded"></div>
+            <div className="space-y-4 animate-pulse">
+              <div className="h-5 bg-slate-100 rounded w-1/3"></div>
+              <div className="h-24 bg-slate-50 rounded"></div>
             </div>
           )}
 
           {error && (
-            <div className="p-4 rounded-lg bg-rose-50 text-rose-700">
+            <div className="p-4 rounded-xl bg-rose-50 text-rose-700 text-sm">
               Failed to load ticket: {error.message}
             </div>
           )}
@@ -183,24 +183,24 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               {/* Left 2 Cols: Description & Comments */}
               <div className="md:col-span-2 space-y-5">
                 {/* Description */}
-                <div className="space-y-1.5">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Description
                   </span>
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-slate-800 leading-relaxed whitespace-pre-wrap">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">
                     {ticket.description}
                   </div>
                 </div>
 
                 {/* Comments Section */}
                 <div className="space-y-3 pt-2">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                     Activity &amp; Comments ({ticket.comments.length})
                   </span>
 
-                  <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                     {ticket.comments.length === 0 ? (
-                      <p className="text-slate-400 italic">No comments yet.</p>
+                      <p className="text-slate-400 italic text-sm">No comments yet.</p>
                     ) : (
                       ticket.comments.map((c) => {
                         const isFirstResponse =
@@ -211,27 +211,29 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         return (
                           <div
                             key={c.id}
-                            className={`p-3.5 rounded-xl border text-xs space-y-1.5 ${
+                            className={`p-4 rounded-xl border text-sm space-y-1.5 ${
                               isFirstResponse
-                                ? 'border-indigo-200 bg-indigo-50/40'
-                                : 'border-slate-100 bg-slate-50/50'
+                                ? 'border-indigo-200 bg-indigo-50/50 ring-1 ring-indigo-200'
+                                : 'border-slate-100 bg-slate-50/60'
                             }`}
                           >
-                            <div className="flex items-center justify-between text-[11px]">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-semibold text-slate-800">{c.author.name}</span>
-                                <span className="text-[10px] text-slate-400 font-mono">
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-900">{c.author.name}</span>
+                                <span className="text-[11px] text-slate-400 font-mono">
                                   ({c.author.role})
                                 </span>
                                 {isFirstResponse && (
-                                  <span className="text-[10px] text-indigo-700 bg-indigo-100/70 font-bold px-1.5 py-0.2 rounded">
+                                  <span className="text-[11px] text-indigo-700 bg-indigo-100 font-bold px-2 py-0.5 rounded-full">
                                     1st Response Milestone
                                   </span>
                                 )}
                               </div>
                               <span className="text-slate-400">{formatTimestamp(c.createdAt)}</span>
                             </div>
-                            <p className="text-slate-700 leading-relaxed">{c.content}</p>
+                            <p className="text-slate-800 leading-relaxed text-xs sm:text-sm">
+                              {c.content}
+                            </p>
                           </div>
                         );
                       })
@@ -247,17 +249,17 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       onChange={(e) => setCommentContent(e.target.value)}
                       placeholder={
                         isAgent
-                          ? 'Add reply (triggers First Response SLA if initial)...'
-                          : 'Write a comment...'
+                          ? 'Add agent reply (triggers First Response SLA)...'
+                          : 'Write a comment or follow-up...'
                       }
-                      className="flex-1 px-3.5 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-slate-400 bg-white"
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-slate-400 bg-white shadow-2xs"
                     />
                     <button
                       type="submit"
                       disabled={submittingComment || !commentContent.trim()}
-                      className="px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-50"
+                      className="px-4.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition shadow-xs disabled:opacity-50"
                     >
-                      <Send className="w-3.5 h-3.5" />
+                      <Send className="w-4 h-4" />
                       <span>Send</span>
                     </button>
                   </form>
@@ -267,36 +269,36 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               {/* Right Col: SLA Breakdown & Agent Toolbar */}
               <div className="space-y-4">
                 {/* SLA Summary Box */}
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3.5">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                     SLA Status (Business Hours)
                   </span>
 
-                  <div className="space-y-2.5">
-                    <div className="p-3 bg-white rounded-lg border border-slate-200/60 shadow-2xs space-y-1.5">
+                  <div className="space-y-3">
+                    <div className="p-3.5 bg-white rounded-xl border border-slate-200/60 shadow-2xs space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-slate-600 font-semibold">1st Response</span>
+                        <span className="text-xs sm:text-sm text-slate-700 font-bold">1st Response</span>
                         <SLABadge
                           state={ticket.sla.firstResponseState}
                           remainingMinutes={ticket.sla.firstResponseRemainingMinutes}
                           isCompleted={!!ticket.firstResponseAt}
                         />
                       </div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-xs text-slate-500">
                         <span className="text-slate-400">Due:</span> {formatTimestamp(ticket.sla.firstResponseDueAt)}
                       </div>
                     </div>
 
-                    <div className="p-3 bg-white rounded-lg border border-slate-200/60 shadow-2xs space-y-1.5">
+                    <div className="p-3.5 bg-white rounded-xl border border-slate-200/60 shadow-2xs space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-slate-600 font-semibold">Resolution</span>
+                        <span className="text-xs sm:text-sm text-slate-700 font-bold">Resolution</span>
                         <SLABadge
                           state={ticket.sla.resolutionState}
                           remainingMinutes={ticket.sla.resolutionRemainingMinutes}
                           isCompleted={!!ticket.resolvedAt}
                         />
                       </div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-xs text-slate-500">
                         <span className="text-slate-400">Due:</span> {formatTimestamp(ticket.sla.resolutionDueAt)}
                       </div>
                     </div>
@@ -304,35 +306,35 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 </div>
 
                 {/* Metadata Card */}
-                <div className="p-4 rounded-xl bg-white border border-slate-200/80 space-y-2 text-[11px]">
+                <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 space-y-2.5 text-xs sm:text-sm shadow-2xs">
                   <div>
-                    <span className="text-slate-400 block font-medium">Reporter</span>
-                    <span className="font-semibold text-slate-800">{ticket.reporter.name}</span>
+                    <span className="text-slate-400 block text-xs font-medium">Reporter</span>
+                    <span className="font-semibold text-slate-900">{ticket.reporter.name}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block font-medium">Assignee</span>
-                    <span className="font-semibold text-slate-800">
+                    <span className="text-slate-400 block text-xs font-medium">Assignee</span>
+                    <span className="font-semibold text-slate-900">
                       {ticket.assignee ? ticket.assignee.name : 'Unassigned'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block font-medium">Created</span>
+                    <span className="text-slate-400 block text-xs font-medium">Created</span>
                     <span className="font-medium text-slate-700">{formatTimestamp(ticket.createdAt)}</span>
                   </div>
                 </div>
 
                 {/* Agent Actions Toolbar */}
                 {isAgent && (
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                      Agent Actions
+                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3.5">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                      Agent Controls
                     </span>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       <select
                         value={ticket.assignee?.id || ''}
                         onChange={(e) => handleAssign(e.target.value)}
-                        className="w-full text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-none focus:border-slate-400"
+                        className="w-full text-xs sm:text-sm bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:border-slate-400 shadow-2xs font-medium cursor-pointer"
                       >
                         <option value="" disabled>
                           Assign Agent...
@@ -351,10 +353,10 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                               key={st}
                               disabled={ticket.status === st}
                               onClick={() => handleStatusChange(st)}
-                              className={`text-[10px] py-1.5 px-2 rounded-md font-semibold transition ${
+                              className={`text-xs py-2 px-2 rounded-lg font-bold transition ${
                                 ticket.status === st
-                                  ? 'bg-slate-900 text-white'
-                                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                  ? 'bg-slate-900 text-white shadow-2xs'
+                                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
                               }`}
                             >
                               {st === 'IN_PROGRESS' ? 'IN PROG' : st}
@@ -366,7 +368,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       {ticket.status !== 'RESOLVED' && (
                         <button
                           onClick={handleResolve}
-                          className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold transition text-center mt-1"
+                          className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold transition text-center mt-1 shadow-xs"
                         >
                           Resolve Ticket
                         </button>
