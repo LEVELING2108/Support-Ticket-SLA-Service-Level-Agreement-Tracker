@@ -9,18 +9,20 @@ Built with **TypeScript (Strict Mode)**, **GraphQL Yoga**, **Prisma ORM**, **Pos
 ## 📑 Table of Contents
 1. [Project Overview](#-project-overview)
 2. [Tech Stack](#-tech-stack)
-3. [Architecture Overview](#-architecture-overview)
-4. [Database Schema & ERD](#-database-schema--erd)
-5. [SLA Engine & Calculation Approach](#-sla-engine--calculation-approach)
-6. [Status Transition Rules](#-status-transition-rules)
-7. [Authentication & Authorization](#-authentication--authorization)
-8. [Environment Variables](#-environment-variables)
-9. [Setup & Installation](#-setup--installation)
-10. [Database Migrations & Seeding](#-database-migrations--seeding)
-11. [Running the Application](#-running-the-application)
-12. [Testing Strategy](#-testing-strategy)
-13. [Example GraphQL Operations](#-example-graphql-operations)
-14. [How I'd Extend This](#-how-id-extend-this)
+3. [User Interface & Experience](#-user-interface--experience)
+4. [Architecture Overview](#-architecture-overview)
+5. [Database Schema & ERD](#-database-schema--erd)
+6. [SLA Engine & Calculation Approach](#-sla-engine--calculation-approach)
+7. [Status Transition Rules](#-status-transition-rules)
+8. [Authentication & Authorization](#-authentication--authorization)
+9. [Pre-Seeded Demo Accounts](#-pre-seeded-demo-accounts)
+10. [Environment Variables](#-environment-variables)
+11. [Setup & Installation](#-setup--installation)
+12. [Database Migrations & Seeding](#-database-migrations--seeding)
+13. [Running the Application](#-running-the-application)
+14. [Testing Strategy](#-testing-strategy)
+15. [Example GraphQL Operations](#-example-graphql-operations)
+16. [How I'd Extend This](#-how-id-extend-this)
 
 ---
 
@@ -30,7 +32,7 @@ In real-world enterprise customer support, Service Level Agreements (SLAs) are m
 - **Operating Hours**: Monday through Friday, 09:00 to 18:00 (9 hours / 540 minutes per working day).
 - **Exclusions**: Nights (outside 09:00–18:00), weekends (Saturday & Sunday), and configured public holidays never consume SLA time.
 - **Backend as Single Source of Truth**: The GraphQL backend calculates all due dates, remaining minutes, and SLA states (`ON_TRACK`, `AT_RISK`, `BREACHED`). The frontend strictly displays these values and never computes SLA status locally.
-- **Clock Freezing**: When an SLA milestone occurs (first comment by a non-reporter for `firstResponseAt`, or ticket resolution for `resolvedAt`), the SLA clock freezes permanently and can never retroactively breach.
+- **Milestone Clock Freezing**: When an SLA milestone occurs (first comment by a non-reporter for `firstResponseAt`, or ticket resolution for `resolvedAt`), the SLA clock freezes permanently and can never retroactively breach.
 
 ---
 
@@ -65,10 +67,37 @@ In real-world enterprise customer support, Service Level Agreements (SLAs) are m
 | **Database** | `PostgreSQL 16 (Alpine)` | Relational database containerized in Docker Compose |
 | **Date Arithmetic** | `date-fns` & `date-fns-tz` | Pure timezone-aware business calendar math engine |
 | **Authentication** | `bcryptjs` + `jsonwebtoken` | Secure password hashing (10 salt rounds) + signed JWTs |
-| **Frontend UI** | `React 18` + `Vite` + `Tailwind CSS` | Full-page responsive dashboard with custom handcrafted SVG icons |
+| **Frontend UI** | `React 18` + `Vite` + `Tailwind CSS` | Clean minimalist dashboard with custom SVG progress rings & icons |
 | **GraphQL Client** | `Urql 4.1` | Lightweight GraphQL client with auth exchange |
 | **Testing** | `Vitest 1.6` | High-performance unit and real PostgreSQL integration test runner |
 | **Linting** | `ESLint 8.57` + `@typescript-eslint` | Enforced `@typescript-eslint/no-explicit-any: error` |
+
+---
+
+## 🎨 User Interface & Experience
+
+The user interface follows a modern, high-density minimalist aesthetic:
+
+1. **Starting / Landing Page**:
+   - Header with brand shield logo + `SLA ENGINE` badge pill.
+   - Timezone pill: `● Mon-Fri 09:00-18:00 Asia/Kolkata`.
+   - 1-Click Launch buttons: `[Launch Dashboard]`, `[Enter as Agent]`, and `[Enter as Reporter]` (executing live backend authentication).
+   - 3 Architectural Pillar cards explaining Business Hours, Milestone Freezing, and Authoritative Engine calculations.
+2. **Main Management Dashboard**:
+   - Subheader showing live engine status (`● Engine Active`), timezone (`Asia/Kolkata`), and active public holiday count.
+   - 4 Metric Counter Cards with colored status dots (`Open Tickets`, `In Progress`, `SLA At Risk`, `SLA Breached`).
+   - Integrated Filter & Search bar (`Status ▾`, `Priority ▾`, `SLA State ▾`, `Assignee ▾` + Reset).
+   - High-density data table with outline pill badges, ticket summary previews, assignee chips, SVG progress rings for both First Response and Resolution SLAs, and relative/absolute timestamps.
+3. **Dual-Pane Ticket Detail Modal**:
+   - Left Pane (65%): Full description, activity & comment stream with highlighted First Response SLA Milestone box (`🎯 1st Response SLA Milestone (Clock Frozen)`), and inline reply composer.
+   - Right Pane (35%): Live SLA Countdown cards with circular progress rings, ticket metadata, and Support Agent Action Center (agent reassignment, segmented status toggle `[ OPEN | PROG | RESOLVED ]`, and one-click `Resolve Ticket` button).
+4. **Create Ticket Modal**:
+   - Title input with `min 3 chars` validation.
+   - Description input with `min 5 chars` validation.
+   - 4-column Priority Selector grid displaying SLA targets (`URGENT: 1h/4h`, `HIGH: 4h/24h`, `MEDIUM: 8h/48h`, `LOW: 24h/72h`).
+5. **Auth Modal**:
+   - Clean Login and Register tabs with show/hide password toggle.
+   - Quick Demo Access strip with 1-click Agent and Reporter buttons.
 
 ---
 
@@ -79,7 +108,7 @@ The system follows a strict layered, decoupled architecture where business logic
 ```mermaid
 flowchart TD
     subgraph Client ["Frontend Layer (React 18 + Vite + Tailwind)"]
-        UI[Responsive Full-Width Dashboard]
+        UI[Starting Page & Dashboard Workbench]
         Urql[Urql GraphQL Client + Auth Header]
         UI <--> Urql
     end
@@ -103,9 +132,9 @@ flowchart TD
         TicketSvc --> SLAEngine
     end
 
-    subgraph Data ["Persistence Layer (PostgreSQL 16)"]
+    subgraph Persistence ["Persistence Layer (PostgreSQL 16)"]
         Prisma[Prisma Client ORM]
-        Postgres[(Docker PostgreSQL Container)]
+        Postgres[(Dockerized PostgreSQL 16 DB)]
         AuthSvc --> Prisma
         TicketSvc --> Prisma
         Prisma --> Postgres
@@ -116,14 +145,15 @@ flowchart TD
 
 ## 🗄️ Database Schema & ERD
 
-The schema is defined in [`backend/prisma/schema.prisma`](file:///C:/Users/suman/Downloads/PERSONAL%20PROJECT/Burdenoff/backend/prisma/schema.prisma) with explicit relations, enums, and optimized database indexes:
+The database schema is managed via **Prisma ORM** with relational integrity, foreign key constraints, and performance indexes on `status`, `priority`, and `reporterId`.
 
 ```mermaid
 erDiagram
-    User ||--o{ Ticket : "reports"
-    User ||--o{ Ticket : "assigned_to"
-    User ||--o{ Comment : "authors"
-    Ticket ||--o{ Comment : "contains"
+    User ||--o{ Ticket : reports
+    User ||--o{ Ticket : assigned_to
+    User ||--o{ Comment : authors
+    Ticket ||--o{ Comment : contains
+    Holiday
 
     User {
         String id PK
@@ -139,14 +169,14 @@ erDiagram
         String id PK
         String title
         String description
-        Priority priority "URGENT | HIGH | MEDIUM | LOW"
+        Priority priority "LOW | MEDIUM | HIGH | URGENT"
         TicketStatus status "OPEN | IN_PROGRESS | RESOLVED | CLOSED"
         String reporterId FK
-        String assigneeId FK "optional"
+        String assigneeId FK "Nullable"
+        DateTime firstResponseAt "Nullable (Milestone Freeze)"
+        DateTime resolvedAt "Nullable (Milestone Freeze)"
         DateTime createdAt
         DateTime updatedAt
-        DateTime firstResponseAt "optional milestone"
-        DateTime resolvedAt "optional milestone"
     }
 
     Comment {
@@ -159,198 +189,182 @@ erDiagram
 
     Holiday {
         String id PK
-        String date UK "YYYY-MM-DD"
+        DateTime date UK
         String name
         DateTime createdAt
     }
 ```
 
-### Strategic Indexes:
-- `Ticket(status)` & `Ticket(priority)` — High-frequency dashboard counter and filter operations.
-- `Ticket(reporterId)` & `Ticket(assigneeId)` — Role-based ticket ownership filtering.
-- `Ticket(createdAt)` — Efficient cursor-based pagination ordering.
-- `Holiday(date)` — $O(1)$ unique lookup for date holiday exclusion.
-
 ---
 
 ## ⏱️ SLA Engine & Calculation Approach
 
-### 1. Default SLA Policies:
-| Priority | First Response SLA Target | Resolution SLA Target |
-|---|---|---|
-| **URGENT** | 1 business hour (60 mins) | 4 business hours (240 mins) |
-| **HIGH** | 4 business hours (240 mins) | 24 business hours (1,440 mins) |
-| **MEDIUM** | 8 business hours (480 mins) | 48 business hours (2,880 mins) |
-| **LOW** | 24 business hours (1,440 mins) | 72 business hours (4,320 mins) |
+### 1. SLA Targets by Priority
+| Priority | First Response SLA | Resolution SLA | Total Business Minutes |
+|---|---|---|---|
+| **URGENT** | 1 business hour | 4 business hours | 60m response / 240m resolution |
+| **HIGH** | 4 business hours | 24 business hours (2.67 business days) | 240m response / 1,440m resolution |
+| **MEDIUM** | 8 business hours | 48 business hours (5.33 business days) | 480m response / 2,880m resolution |
+| **LOW** | 24 business hours | 72 business hours (8.00 business days) | 1,440m response / 4,320m resolution |
 
-### 2. Business Hours Arithmetic Algorithm (`addBusinessMinutes`):
-```text
-function addBusinessMinutes(startTime, minutesNeeded, holidays, config):
-  cursor = snapToNextBusinessMoment(startTime, holidays, config)
-  while minutesNeeded > 0:
-    endOfWorkToday = 18:00 on cursor's day
-    availableMinutesToday = difference(endOfWorkToday, cursor)
-    if availableMinutesToday >= minutesNeeded:
-      return cursor + minutesNeeded
-    minutesNeeded = minutesNeeded - availableMinutesToday
-    cursor = snapToNextBusinessMoment(tomorrow 09:00, holidays, config)
-```
+### 2. Timezone & Operating Hours Normalization
+- **Working Window**: 09:00:00 to 18:00:00 in `Asia/Kolkata` (configurable via `BUSINESS_TIMEZONE`).
+- **Snapping**: If a ticket is created outside working hours (nights, weekends, or holidays), the clock start is snapped forward to **09:00:00 on the next valid business day**.
+- **Day-Walking**: When adding business minutes, the engine calculates remaining minutes on the current day. If remaining time exceeds available business minutes before 18:00, it advances to 09:00 on the next business day (skipping weekends and configured holidays).
 
-### 3. Edge-Case Snapping (`snapToNextBusinessMoment`):
-- **Before Hours** (e.g. Mon 07:00) $\to$ Snaps forward to Mon 09:00.
-- **After Hours** (e.g. Mon 20:00) $\to$ Snaps forward to Tue 09:00.
-- **Friday Evening** (e.g. Fri 17:59) $\to$ 1 minute counts on Friday, remaining time continues Mon 09:00.
-- **Weekends** (e.g. Sat 14:00) $\to$ Snaps forward to Mon 09:00.
-- **Public Holidays** (e.g. Mon is a holiday) $\to$ Snaps forward to Tue 09:00.
+### 3. SLA State & The 75% Boundary Rule
+- $\text{Consumed Ratio} = \frac{\text{Elapsed Business Minutes}}{\text{Total Target Budget Minutes}}$
+- **`ON_TRACK`**: $\text{Consumed Ratio} \le 0.75$ ($75.0\%$).
+- **`AT_RISK`**: $\text{Consumed Ratio} > 0.75$ and not yet breached.
+- **`BREACHED`**: Deadline has passed without completion, or milestone timestamp exceeded the target deadline.
 
-### 4. SLA States & The 75% Boundary Rule:
-$$\text{Consumed Ratio} = \frac{\text{Elapsed Business Minutes}}{\text{Total SLA Target Minutes}}$$
-
-- **`ON_TRACK`**: $0\% \le \text{Consumed Ratio} \le 75.0\%$
-- **`AT_RISK`**: $\text{Consumed Ratio} > 75.0\%$ and current time is before the SLA due date.
-- **`BREACHED`**: Current time has passed the SLA due date without milestone completion, or milestone completed after the due date.
-
-### 5. Clock Freezing:
-- **First Response**: The first comment created by someone other than the ticket reporter (`authorId !== reporterId`) permanently stamps `firstResponseAt`. Subsequent comments do not alter this timestamp.
-- **Resolution**: Transitioning to `RESOLVED` permanently stamps `resolvedAt`.
-- Once stamped, the SLA state is permanently frozen and can never retroactively breach.
+### 4. Milestone Freezing Guarantee
+- **First Response Milestone**: The first comment where `comment.authorId !== ticket.reporterId` sets `ticket.firstResponseAt`. The first response SLA clock is permanently locked to the time between creation and first response.
+- **Resolution Milestone**: When transitioning to `RESOLVED`, `ticket.resolvedAt` is stamped. The resolution SLA clock is permanently locked.
+- **Invariant**: Once frozen, remaining minutes is returned as `0` and the SLA state remains immutable.
 
 ---
 
 ## 🔄 Status Transition Rules
 
-Ticket state changes strictly follow a server-side state machine:
+The ticketing lifecycle enforces valid status transitions via `TicketService.changeStatus`:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> OPEN : createTicket
-    OPEN --> IN_PROGRESS : assignTicket / start work
-    OPEN --> RESOLVED : resolveTicket (direct)
-    OPEN --> CLOSED : Close
-    IN_PROGRESS --> RESOLVED : resolveTicket (sets resolvedAt)
-    IN_PROGRESS --> OPEN : Return to Queue
-    IN_PROGRESS --> CLOSED : Close
-    RESOLVED --> CLOSED : Customer Confirmation
-    RESOLVED --> IN_PROGRESS : Reopen
-    CLOSED --> OPEN : Explicit Reopen
+    [*] --> OPEN : Ticket Created
+    OPEN --> IN_PROGRESS : Agent starts work
+    OPEN --> RESOLVED : Direct resolution
+    IN_PROGRESS --> RESOLVED : Issue fixed (freezes resolvedAt)
+    RESOLVED --> CLOSED : Customer/Agent accepts fix
+    RESOLVED --> IN_PROGRESS : Reopened by customer
+    CLOSED --> [*]
 ```
 
-| Current Status | Allowed Target Statuses | Disallowed Statuses |
-|---|---|---|
-| `OPEN` | `IN_PROGRESS`, `RESOLVED`, `CLOSED` | — |
-| `IN_PROGRESS` | `OPEN`, `RESOLVED`, `CLOSED` | — |
-| `RESOLVED` | `IN_PROGRESS` (Reopen), `CLOSED` | `OPEN` |
-| `CLOSED` | `OPEN` (Explicit Reopen) | `IN_PROGRESS`, `RESOLVED` |
-
-Any rejected transition returns a standard GraphQL error with code `INVALID_STATUS_TRANSITION`.
+- Invalid transitions (e.g. `CLOSED` $\to$ `OPEN`, or non-agents attempting status changes) throw standardized GraphQL errors (`INVALID_STATUS_TRANSITION`, `FORBIDDEN`).
 
 ---
 
 ## 🔐 Authentication & Authorization
 
-- **Password Hashing**: Bcrypt with 10 salt rounds (`backend/src/auth/password.ts`).
-- **Token Format**: Signed JSON Web Tokens (JWT) with standard expiration (`backend/src/auth/jwt.ts`).
-- **Server-Side Guards**:
-  - `requireAuth(context)` — Ensures request has a valid JWT Bearer token.
-  - `requireAgent(context)` — Ensures authenticated user has the `AGENT` role.
-- **Machine-Readable Error Codes**:
-  `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `TICKET_NOT_FOUND`, `USER_NOT_FOUND`, `INVALID_STATUS_TRANSITION`, `INVALID_PRIORITY`.
+- **Password Security**: Hashed using `bcryptjs` with 10 salt rounds.
+- **Token Format**: Signed JSON Web Tokens (JWT) with standard `Bearer <token>` in the `Authorization` header.
+- **Role Permissions**:
+  - `REPORTER`: Can create tickets, query tickets they reported, and post comments on any ticket.
+  - `AGENT`: Can view all tickets, create tickets, reassign tickets, update statuses, resolve tickets, and post staff comments.
+- **Standardized GraphQL Error Codes**:
+  - `UNAUTHORIZED`: Missing or invalid authentication token.
+  - `FORBIDDEN`: User role lacks permission for the requested mutation.
+  - `VALIDATION_ERROR`: Malformed input (e.g. password < 6 chars, title < 3 chars).
+  - `TICKET_NOT_FOUND`: Target ticket ID does not exist.
+  - `INVALID_STATUS_TRANSITION`: Attempted lifecycle violation.
+
+---
+
+## 👥 Pre-Seeded Demo Accounts
+
+The database comes pre-seeded with ready-to-use accounts and tickets:
+
+| Role | Email | Password | Permissions |
+|---|---|---|---|
+| **Support Agent** | `agent@example.com` | `password123` | Full access: assign tickets, transition status, resolve issues, post replies |
+| **Reporter** | `reporter@example.com` | `password123` | Create tickets, view SLA progress, post comments |
 
 ---
 
 ## ⚙️ Environment Variables
 
-All settings are configured in `.env` (template provided in `.env.example`):
-
-| Variable | Default Value | Description |
-|---|---|---|
-| `DATABASE_URL` | `postgresql://postgres:postgrespassword@localhost:5432/burdenoff_db?schema=public` | PostgreSQL connection URL |
-| `JWT_SECRET` | `super-secret-jwt-key-burdenoff-support-tracker-2026` | Secret key used to sign JWTs |
-| `BUSINESS_TIMEZONE` | `Asia/Kolkata` | Timezone used for SLA business hours math |
-| `PORT` | `4000` | GraphQL Yoga HTTP port |
+### Backend (`backend/.env`)
+```env
+PORT=4000
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/burdenoff?schema=public"
+JWT_SECRET="super-secret-jwt-key-for-development"
+JWT_EXPIRES_IN="7d"
+BUSINESS_TIMEZONE="Asia/Kolkata"
+```
 
 ---
 
 ## 🚀 Setup & Installation
 
-### Single-Command Setup Flow:
+### Prerequisites
+- **Bun** (v1.1+) or **Node.js** (v20+)
+- **Docker** & **Docker Compose**
+
+### Step 1: Clone Repository
 ```bash
-docker compose up -d && bun install && bun run gendb && bun run dev:all
+git clone https://github.com/LEVELING2108/Support-Ticket-SLA-Service-Level-Agreement-Tracker.git
+cd Support-Ticket-SLA-Service-Level-Agreement-Tracker
 ```
 
-*(If using npm/Node.js instead of Bun: `docker compose up -d && npm install && npm run gendb && npm run dev:all`)*
+### Step 2: Start PostgreSQL Database Container
+```bash
+docker compose up -d
+```
+
+### Step 3: Install Dependencies
+```bash
+# Install backend dependencies
+bun --cwd backend install
+
+# Install frontend dependencies
+bun --cwd frontend install
+```
 
 ---
 
 ## 🗃️ Database Migrations & Seeding
 
-### Apply Migrations:
 ```bash
-bun run gendb
-# or: cd backend && bunx prisma migrate dev
-```
+# Generate Prisma Client & Run Migrations
+bun --cwd backend prisma migrate dev --name init
 
-### Seed Database:
-```bash
-bun run seed
+# Seed initial users, holidays, and tickets
+bun run backend/prisma/seed.ts
 ```
-
-### Pre-Seeded User Accounts:
-| Role | Email | Password | Permissions |
-|---|---|---|---|
-| **Support Agent** | `agent@example.com` | `password123` | Assign tickets, change status, resolve, comment |
-| **Reporter** | `reporter@example.com` | `password123` | Create tickets, view tickets, add comments |
 
 ---
 
-## 🏃 Running the Application
+## 💻 Running the Application
 
-### Option A: Run Concurrently (Recommended)
+### Start Backend API Server (Port 4000)
 ```bash
-npm run dev:all
-```
-
-### Option B: Run Processes Separately
-```bash
-# Terminal 1 — Backend GraphQL Yoga API (Port 4000)
 bun --cwd backend dev
-
-# Terminal 2 — Frontend React UI (Port 5173)
-bun --cwd frontend dev
+# GraphQL Playground available at: http://localhost:4000/graphql
 ```
 
-- **Frontend App**: `http://localhost:5173`
-- **GraphQL Playground**: `http://localhost:4000/graphql`
+### Start Frontend Dev Server (Port 5173)
+```bash
+bun --cwd frontend dev
+# Web application available at: http://localhost:5173
+```
 
 ---
 
 ## 🧪 Testing Strategy
 
-The project contains **52 automated tests** across unit and integration suites:
+The test suite covers pure mathematics, services, and real PostgreSQL database integration tests:
 
 ```bash
-# Run all tests
-npm run test
-
-# Run unit tests only
-npm run test:unit
-
-# Run PostgreSQL integration tests
-npm run test:integration
+bun run --cwd backend test
 ```
 
-### Test Suite Breakdown:
-1. `tests/unit/businessHours.test.ts` (15 tests) — Weekday math, before-hours, after-hours, Friday 17:59, weekends, single/multi-day holidays, multi-day spans (4h, 8h, 24h, 48h, 72h).
-2. `tests/unit/slaEngine.test.ts` (12 tests) — 75% boundary threshold, `AT_RISK`, `BREACHED`, countdown math, and permanent clock freezing.
-3. `tests/unit/auth.test.ts` (7 tests) — Password hashing, JWT signing/verification, `requireAuth`, `requireAgent`.
-4. `tests/unit/ticketService.test.ts` (9 tests) — Ticket creation validation and status transition state machine.
-5. `tests/integration/ticketFlow.integration.test.ts` (8 tests) — **Real PostgreSQL integration test** verifying registration $\to$ ticket creation $\to$ reporter comment $\to$ agent comment milestone trigger $\to$ assignment $\to$ status transitions $\to$ resolution.
+### Automated Test Coverage (52 / 52 Passed):
+- `tests/unit/businessHours.test.ts` (15 tests):
+  - Snapping before/after hours, weekend day-walking, holiday skipping, exact minute boundary calculations.
+- `tests/unit/slaEngine.test.ts` (12 tests):
+  - 75% boundary transition to `AT_RISK`, deadline overdue to `BREACHED`, milestone clock freezing.
+- `tests/unit/ticketService.test.ts` (9 tests):
+  - Status transition state machine validation, non-reporter first comment milestone stamping.
+- `tests/unit/auth.test.ts` (7 tests):
+  - Bcrypt hashing, token issuance, invalid credential handling, role authorization guards.
+- `tests/integration/ticketFlow.integration.test.ts` (8 tests):
+  - Real PostgreSQL full lifecycle: register $\to$ create ticket $\to$ agent reply $\to$ resolve $\to$ SLA validation.
 
 ---
 
 ## 📡 Example GraphQL Operations
 
-### 1. User Login Mutation
+### 1. User Login
 ```graphql
 mutation LoginUser {
   login(email: "agent@example.com", password: "password123") {
@@ -358,19 +372,18 @@ mutation LoginUser {
     user {
       id
       name
-      email
       role
     }
   }
 }
 ```
 
-### 2. Create Ticket Mutation
+### 2. Create Ticket
 ```graphql
-mutation CreateTicket {
+mutation CreateNewTicket {
   createTicket(
-    title: "Database connection latency spike"
-    description: "High latency observed on replica cluster during peak hours."
+    title: "Payment gateway timeout on checkout"
+    description: "Customers receiving 500 error when completing Stripe payments."
     priority: URGENT
   ) {
     id
@@ -389,31 +402,19 @@ mutation CreateTicket {
 }
 ```
 
-### 3. Query Paginated Tickets with Filters
+### 3. Add Milestone Agent Comment
 ```graphql
-query GetFilteredTickets {
-  tickets(priority: URGENT, slaState: ON_TRACK, take: 10) {
-    nodes {
-      id
-      title
-      priority
-      status
-      reporter {
-        name
-      }
-      assignee {
-        name
-      }
-      sla {
-        firstResponseState
-        firstResponseRemainingMinutes
-        resolutionState
-        resolutionRemainingMinutes
-      }
-    }
-    pageInfo {
-      hasNextPage
-      endCursor
+mutation AddAgentReply($ticketId: ID!) {
+  addComment(
+    ticketId: $ticketId
+    content: "Investigating the payment gateway connection pool."
+  ) {
+    id
+    content
+    createdAt
+    author {
+      name
+      role
     }
   }
 }
@@ -421,7 +422,7 @@ query GetFilteredTickets {
 
 ### 4. Query Dashboard Summary
 ```graphql
-query GetDashboard {
+query GetDashboardStats {
   dashboard {
     openTickets
     inProgressTickets
@@ -435,18 +436,11 @@ query GetDashboard {
 
 ## 🔮 How I'd Extend This
 
-With additional development time, here are the architectural extensions to implement:
-
 1. **SLA Pause on `WAITING_ON_CUSTOMER` Status**:
-   - Introduce a `WAITING_ON_CUSTOMER` ticket status.
-   - Record time intervals spent waiting and dynamically add those business minutes to the SLA target deadlines (`firstResponseDueAt` and `resolutionDueAt`).
+   - Add a `WAITING_ON_CUSTOMER` status. Record paused time intervals and extend target deadlines by the exact business minutes spent waiting.
 2. **Multi-Timezone & Per-Team Business Calendars**:
-   - Add a `Team` model with localized business hours (e.g. 24/7 for Tier-3 DevOps, 8x5 for Tier-1 Support).
-   - Dynamically look up the team's calendar and timezone when computing SLAs.
-3. **Automated Escalation & Notifications**:
-   - Background cron worker monitoring tickets entering the `AT_RISK` state (>75% budget consumed).
-   - Dispatch alerts via Webhooks to Slack, Discord, or PagerDuty.
-4. **Comprehensive Audit Trail**:
-   - `TicketAuditLog` model recording every status change, reassignment, priority update, and comment with actor IDs and precise UTC timestamps.
-5. **Real-Time GraphQL Subscriptions**:
-   - Implement WebSocket/SSE subscriptions via GraphQL Yoga to push live SLA timer ticks and ticket updates directly to active dashboards.
+   - Support custom team schedules (e.g. 24/7 for Tier-3 DevOps, 8x5 for Tier-1 Support).
+3. **Automated Alerts & Escalations**:
+   - Background worker monitoring tickets entering `AT_RISK` and dispatching webhooks to Slack/PagerDuty.
+4. **Real-Time GraphQL Subscriptions**:
+   - WebSocket / SSE live updates pushing countdown ticks directly to open browser sessions.

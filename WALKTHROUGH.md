@@ -1,6 +1,6 @@
 # 🧭 Support Ticket & SLA Tracker — Project Walkthrough & Architecture Review
 
-This document provides a comprehensive technical walkthrough of the **Support Ticket & SLA Tracker** application for reviewers, covering architecture, SLA mathematics, database design, API design, testing, and operational tradeoffs.
+This document provides a comprehensive technical walkthrough of the **Support Ticket & SLA Tracker** application for reviewers, covering architecture, SLA mathematics, database design, API design, testing, UI design, and operational tradeoffs.
 
 ---
 
@@ -22,11 +22,13 @@ The goal of this application is to solve the classic enterprise challenge of tra
 ```mermaid
 flowchart TD
     subgraph Frontend ["Frontend Layer (React 18 + Vite + Tailwind CSS)"]
-        UI[Interactive UI: Dashboard & Ticket List]
-        AuthCtx[Auth Context & JWT Token Storage]
-        UrqlClient[Urql GraphQL Client + Auth Exchange]
-        UI <--> AuthCtx
-        UI --> UrqlClient
+        Landing[Starting Gate & Persona Triggers]
+        UI[Minimalist High-Density Dashboard]
+        DetailModal[Dual-Pane Ticket Detail Modal]
+        UrqlClient[Urql GraphQL Client + Auth Header]
+        Landing --> UI
+        UI --> DetailModal
+        UI <--> UrqlClient
     end
 
     subgraph Backend ["Backend API Layer (GraphQL Yoga)"]
@@ -62,21 +64,22 @@ flowchart TD
 1. **Schema-First GraphQL Design**: Defined in `.graphql` SDL files. `@graphql-codegen` compiles these schemas into typed TypeScript resolver interfaces, completely eliminating `any`.
 2. **Pure, Isolated SLA Engine**: The business-hours arithmetic is 100% decoupled from Prisma, HTTP, and GraphQL resolvers. It is pure functional TypeScript accepting timestamps, holiday lists, and policy configurations.
 3. **Defense-in-Depth Authorization**: Handled entirely on the server using typed guards (`requireAuth`, `requireAgent`) mapping to explicit GraphQL error codes (`UNAUTHORIZED`, `FORBIDDEN`).
+4. **Modern Minimalist UI**: Tailored to match clean high-density SaaS interfaces (Linear/Vercel) with custom SVG progress rings, outline priority/status pill badges, and dual-pane modal views.
 
 ---
 
 ## 3. SLA Mathematical Engine & Algorithm
 
 ### Policy Matrix:
-| Priority | First Response SLA | Resolution SLA |
-|---|---|---|
-| **URGENT** | 1 business hour (60 mins) | 4 business hours (240 mins) |
-| **HIGH** | 4 business hours (240 mins) | 24 business hours (1,440 mins) |
-| **MEDIUM** | 8 business hours (480 mins) | 48 business hours (2,880 mins) |
-| **LOW** | 24 business hours (1,440 mins) | 72 business hours (4,320 mins) |
+| Priority | First Response SLA | Resolution SLA | Total Business Minutes |
+|---|---|---|---|
+| **URGENT** | 1 business hour (60 mins) | 4 business hours (240 mins) | 60m response / 240m resolution |
+| **HIGH** | 4 business hours (240 mins) | 24 business hours (1,440 mins) | 240m response / 1,440m resolution |
+| **MEDIUM** | 8 business hours (480 mins) | 48 business hours (2,880 mins) | 480m response / 2,880m resolution |
+| **LOW** | 24 business hours (1,440 mins) | 72 business hours (4,320 mins) | 1,440m response / 4,320m resolution |
 
 ### Business Time Arithmetic (`addBusinessMinutes`):
-```
+```typescript
 function addBusinessMinutes(startUtcDate, minutesNeeded, holidays, config):
   zonedCursor = snapToNextBusinessMoment(startUtcDate, holidays, config)
   while minutesNeeded > 0:
@@ -98,112 +101,53 @@ function addBusinessMinutes(startUtcDate, minutesNeeded, holidays, config):
 ### SLA States & The 75% Boundary Rule:
 - $\text{Consumed Ratio} = \frac{\text{Elapsed Business Minutes}}{\text{Total SLA Budget Minutes}}$
 - **`ON_TRACK`**: $0\% \le \text{Ratio} \le 75.0\%$
-- **`AT_RISK`**: $\text{Ratio} > 75.0\%$ and $\text{now} \le \text{dueAt}$
-- **`BREACHED`**: $\text{now} > \text{dueAt}$ without milestone completion, or completed after deadline.
+- **`AT_RISK`**: $\text{Ratio} > 75.0\%$ (and not completed late)
+- **`BREACHED`**: Elapsed time exceeds budget before completion, or milestone timestamp is after deadline.
 
 ---
 
-## 4. Ticket Status Lifecycle & Transitions
+## 4. Key End-to-End Workflows
 
-```mermaid
-stateDiagram-v2
-    [*] --> OPEN : createTicket
-    OPEN --> IN_PROGRESS : assignTicket / start work
-    OPEN --> RESOLVED : resolveTicket (direct)
-    OPEN --> CLOSED : Close
-    IN_PROGRESS --> RESOLVED : resolveTicket (sets resolvedAt)
-    IN_PROGRESS --> OPEN : Return to Queue
-    IN_PROGRESS --> CLOSED : Close
-    RESOLVED --> CLOSED : Customer confirmation
-    RESOLVED --> IN_PROGRESS : Reopen
-    CLOSED --> OPEN : Explicit Reopen
-```
+### 1. Ticket Creation & Due Date Projection
+1. Reporter creates an `URGENT` ticket on Friday at 17:00 UTC.
+2. Backend snaps time to `Asia/Kolkata`, calculates 60 minutes for First Response and 240 minutes for Resolution.
+3. Because the work day ends at 18:00, the remaining resolution budget rolls into Monday 09:00 with zero penalty over the weekend.
 
-| Source Status | Allowed Target Statuses | Disallowed Statuses |
-|---|---|---|
-| `OPEN` | `IN_PROGRESS`, `RESOLVED`, `CLOSED` | — |
-| `IN_PROGRESS` | `OPEN`, `RESOLVED`, `CLOSED` | — |
-| `RESOLVED` | `IN_PROGRESS` (Reopen), `CLOSED` | `OPEN` |
-| `CLOSED` | `OPEN` (Reopen) | `IN_PROGRESS`, `RESOLVED` |
+### 2. First Response Milestone & Clock Freeze
+1. Support agent posts the first comment on the ticket (`authorId !== reporterId`).
+2. `TicketService.addComment` checks if `ticket.firstResponseAt` is `null`.
+3. If `null`, it atomically stamps `ticket.firstResponseAt = new Date()`.
+4. From that millisecond onward, `calculateSLAState` returns the frozen outcome (e.g. `ON_TRACK`) and remaining minutes is permanently locked to `0`.
+
+### 3. Resolution & Ticket Lifecycle
+1. Support agent reviews ticket and transitions status to `RESOLVED`.
+2. Backend atomically stamps `ticket.resolvedAt = new Date()`.
+3. Resolution SLA clock freezes permanently.
 
 ---
 
-## 5. Testing Strategy
+## 5. User Interface Architecture
 
-The test suite contains **52 automated tests** across unit and integration suites:
-
-1. **SLA Business Hours Unit Tests (`businessHours.test.ts`)**:
-   - Tests normal weekday within-hours arithmetic.
-   - Tests before-hours snapping (Mon 07:00 $\to$ 09:00).
-   - Tests after-hours snapping (Mon 20:00 $\to$ Tue 09:00).
-   - Tests Friday evening edge case (17:59).
-   - Tests weekend ticket creation (Sat/Sun).
-   - Tests public holiday skipping and consecutive holiday spans.
-   - Tests multi-day spans (4h, 8h, 24h, 48h, 72h).
-
-2. **SLA State & Clock Freezing Unit Tests (`slaEngine.test.ts`)**:
-   - Validates exact 75% boundary transition to `AT_RISK`.
-   - Validates transition to `BREACHED`.
-   - Validates permanent clock freezing for `firstResponseAt` and `resolvedAt`.
-
-3. **Authentication & Authorization Unit Tests (`auth.test.ts`)**:
-   - Validates bcrypt password hashing and comparison.
-   - Validates JWT signing, expiration, and verification.
-   - Validates `requireAuth` and `requireAgent` guards throwing `UNAUTHORIZED` and `FORBIDDEN`.
-
-4. **Status Transitions Unit Tests (`ticketService.test.ts`)**:
-   - Validates all valid transition paths.
-   - Rejects invalid transitions with `INVALID_STATUS_TRANSITION`.
-
-5. **PostgreSQL Real Integration Tests (`ticketFlow.integration.test.ts`)**:
-   - Runs directly against PostgreSQL in Docker.
-   - End-to-end flow: User registration $\to$ Ticket creation $\to$ Reporter commenting (no first response trigger) $\to$ Agent commenting (triggers and persists `firstResponseAt`) $\to$ Subsequent comments $\to$ Assignment $\to$ Status transition $\to$ Resolution with clock freezing.
+- **Starting / Landing Page**: Introduces SLA rules and features 1-click persona quick-launch buttons for `Alex Agent` (`agent@example.com`) and `Rachel Reporter` (`reporter@example.com`).
+- **Main Dashboard**:
+  - Live subheader with `● Engine Active`, `🌐 Asia/Kolkata`, and `📅 Holidays Loaded` chips.
+  - 4 Metric counter cards with colored status dots.
+  - Real-time search and filter bar (`Status`, `Priority`, `SLA State`, `Assignee`).
+  - High-density data table with circular SVG progress rings.
+- **Dual-Pane Detail Modal**:
+  - Left: Description, comment stream with green First Response Milestone box (`🎯 1st Response SLA Milestone (Clock Frozen)`), and inline reply box with black Send button.
+  - Right: Circular SVG SLA countdown cards, metadata card, and Agent Action Center (`Reassign Ticket ▾`, segmented status toggle `[ OPEN | PROG | RESOLVED ]`, and `Resolve Ticket` button).
 
 ---
 
-## 6. How to Run Locally
+## 6. Testing Strategy & Verification
 
-### 1. Start Database & Install Dependencies
+### Automated Test Suite: **52 / 52 Passed (100%)**
 ```bash
-docker compose up -d
-bun install
+bun run --cwd backend test
 ```
-
-### 2. Apply Migrations & Seed Data
-```bash
-bun run gendb
-bun run seed
-```
-
-### 3. Run Tests
-```bash
-# Run all unit and integration tests
-npm run test
-
-# Run unit tests only
-npm run test:unit
-
-# Run integration tests against PostgreSQL
-npm run test:integration
-```
-
-### 4. Run Application
-```bash
-# Starts backend (http://localhost:4000/graphql) and frontend (http://localhost:3000)
-npm run dev:all
-```
-
----
-
-## 7. Tradeoffs & Future Extensions
-
-1. **SLA Pause on `WAITING_ON_CUSTOMER`**:
-   - *Current Design*: SLA runs continuously across business hours until resolved.
-   - *Extension*: Introduce `WAITING_ON_CUSTOMER` status, compute total business minutes spent in that state, and dynamically extend due dates.
-2. **Per-Team Business Calendars**:
-   - *Current Design*: Single global business calendar (`Asia/Kolkata`, 09:00–18:00).
-   - *Extension*: Add `SupportTeam` model with localized timezones and shift hours (e.g., 24/7 for Tier 3, 8x5 for Tier 1).
-3. **Escalation & Webhooks**:
-   - Trigger automated notifications to Slack/PagerDuty when a ticket reaches `AT_RISK` (>75% budget consumed).
-4. **Audit Trail**:
-   - Historical event store recording all assignee changes, priority alterations, and status transitions with actor timestamps.
+- **15 Business Hours Math Tests**: Snapping, holiday skips, weekend boundary math.
+- **12 SLA Engine Unit Tests**: 75% boundary transitions, milestone freezes, overdue breaches.
+- **9 Ticket Service Tests**: State transitions, non-reporter first reply detection.
+- **7 Auth Unit Tests**: Bcrypt hashing, token issuance, role guards.
+- **8 PostgreSQL Integration Tests**: Full database integration test against Docker PostgreSQL container.
