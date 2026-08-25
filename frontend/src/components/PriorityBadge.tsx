@@ -1,25 +1,30 @@
 import React from 'react';
 import { Priority } from '../types';
 
-export const PriorityBadge: React.FC<{ priority: Priority }> = ({ priority }) => {
+interface PriorityBadgeProps {
+  priority: Priority;
+  className?: string;
+}
+
+export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority, className = '' }) => {
   const getStyle = () => {
     switch (priority) {
       case 'URGENT':
-        return 'text-rose-700 bg-rose-50 border-rose-200/70';
+        return 'border-red-500 text-red-600 bg-red-50/30';
       case 'HIGH':
-        return 'text-orange-700 bg-orange-50 border-orange-200/70';
+        return 'border-amber-500 text-amber-600 bg-amber-50/30';
       case 'MEDIUM':
-        return 'text-blue-700 bg-blue-50 border-blue-200/70';
+        return 'border-indigo-500 text-indigo-600 bg-indigo-50/30';
       case 'LOW':
-        return 'text-slate-600 bg-slate-50 border-slate-200/70';
+        return 'border-stone-400 text-stone-600 bg-stone-50/40';
       default:
-        return 'text-slate-600 bg-slate-50 border-slate-200/70';
+        return 'border-stone-400 text-stone-600 bg-stone-50/40';
     }
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border ${getStyle()}`}
+      className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md border text-[10px] sm:text-[11px] font-bold uppercase tracking-wider font-mono ${getStyle()} ${className}`}
     >
       {priority}
     </span>

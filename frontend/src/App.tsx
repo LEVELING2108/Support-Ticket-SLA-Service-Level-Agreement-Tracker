@@ -12,7 +12,7 @@ import { AuthModal } from './components/AuthModal';
 import { LandingPage } from './components/LandingPage';
 import { GET_DASHBOARD_QUERY, GET_HOLIDAYS_QUERY } from './graphql/operations';
 import { TicketDashboard, TicketStatus, SLAState, Holiday } from './types';
-import { Globe, Calendar, Sparkles } from 'lucide-react';
+import { Globe, Calendar } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -48,8 +48,10 @@ const MainAppContent: React.FC = () => {
     setSLAStateFilter(slaState);
   };
 
+  const holidayCount = holidaysData?.holidays?.length || 1;
+
   return (
-    <div className="min-h-screen bg-[#fbfbfa] flex flex-col font-sans text-stone-900 selection:bg-stone-200 w-full antialiased">
+    <div className="min-h-screen bg-[#fafafa] flex flex-col font-sans text-stone-900 selection:bg-stone-200 w-full antialiased">
       {currentView === 'LANDING' ? (
         <LandingPage
           onEnterDashboard={() => setCurrentView('DASHBOARD')}
@@ -69,59 +71,34 @@ const MainAppContent: React.FC = () => {
             onOpenAuth={() => setIsAuthModalOpen(true)}
           />
 
-          <main className="w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 flex-1">
-            {/* Full-width Top Metadata Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200/70 pb-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">
-                    Support Ticket SLA Center
-                  </h1>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 shadow-2xs">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-subtle-pulse"></span>
-                    Engine Active
-                  </span>
-                </div>
-                <p className="text-xs text-stone-500 font-normal">
-                  SLA clocks count business hours only (Mon–Fri, 09:00–18:00) · Nights, weekends, and holidays excluded
-                </p>
+          <main className="w-full px-4 sm:px-6 lg:px-8 py-5 space-y-4 flex-1">
+            {/* Top Subheader matching mockup */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+              <div className="flex items-center gap-2 text-xs text-stone-600 font-mono">
+                <span className="flex items-center gap-1.5 font-bold text-stone-900">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  Engine Active
+                </span>
+                <span className="text-stone-300 font-sans">|</span>
+                <span className="text-stone-500 font-sans">
+                  Calendar: Standard Support hours only
+                </span>
               </div>
 
-              <div className="flex items-center gap-2.5 text-xs text-stone-600 font-medium flex-wrap">
-                <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-stone-200 shadow-2xs">
+              <div className="flex items-center gap-2 text-xs font-mono">
+                <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-stone-200 text-stone-700 shadow-2xs">
                   <Globe className="w-3.5 h-3.5 text-stone-400" />
-                  <span>Zone: <strong>Asia/Kolkata</strong></span>
+                  <span>Asia/Kolkata</span>
                 </div>
 
-                {holidaysData?.holidays && holidaysData.holidays.length > 0 && (
-                  <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-stone-200 shadow-2xs">
-                    <Calendar className="w-3.5 h-3.5 text-stone-400" />
-                    <span>{holidaysData.holidays.length} Holiday Active</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-stone-200 text-stone-700 shadow-2xs">
+                  <Calendar className="w-3.5 h-3.5 text-stone-400" />
+                  <span>{holidayCount} {holidayCount === 1 ? 'Holiday' : 'Holidays'} Loaded</span>
+                </div>
               </div>
             </div>
 
-            {/* Guest Banner */}
-            {!isAuthenticated && (
-              <div className="px-4 py-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-amber-900 text-xs flex items-center justify-between gap-3 shadow-2xs animate-in fade-in duration-300">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>
-                    Viewing as Guest. Sign in as <strong className="font-bold">agent@example.com</strong> or{' '}
-                    <strong className="font-bold">reporter@example.com</strong> (<code>password123</code>) to create &amp; manage tickets.
-                  </span>
-                </div>
-                <button
-                  onClick={() => setIsAuthModalOpen(true)}
-                  className="text-xs text-amber-950 font-bold underline hover:text-black shrink-0 active:scale-95 transition-transform"
-                >
-                  Sign In
-                </button>
-              </div>
-            )}
-
-            {/* Full-width Stat Counters */}
+            {/* 4 Metric Cards */}
             <DashboardCards
               dashboard={dashboardData?.dashboard ?? null}
               loading={dashboardFetching}
@@ -130,29 +107,17 @@ const MainAppContent: React.FC = () => {
               activeSLAState={slaStateFilter}
             />
 
-            {/* Full-width Ticket List */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-bold text-stone-400 uppercase tracking-wider">
-                  Tickets &amp; SLA Milestones
-                </h2>
-              </div>
-
-              <TicketList
-                onSelectTicket={(id) => setSelectedTicketId(id)}
-                statusFilter={statusFilter}
-                slaStateFilter={slaStateFilter}
-                onStatusFilterChange={setStatusFilter}
-                onSLAStateFilterChange={setSLAStateFilter}
-                refreshTrigger={refreshKey}
-                onOpenAuth={() => setIsAuthModalOpen(true)}
-              />
-            </div>
+            {/* Full-width Ticket Table & Filter Bar */}
+            <TicketList
+              onSelectTicket={(id) => setSelectedTicketId(id)}
+              statusFilter={statusFilter}
+              slaStateFilter={slaStateFilter}
+              onStatusFilterChange={setStatusFilter}
+              onSLAStateFilterChange={setSLAStateFilter}
+              refreshTrigger={refreshKey}
+              onOpenAuth={() => setIsAuthModalOpen(true)}
+            />
           </main>
-
-          <footer className="border-t border-stone-200/70 py-4 text-center text-xs text-stone-400 font-normal w-full">
-            Burdenoff · Business Hours SLA Engine · Crafted with care
-          </footer>
         </>
       )}
 

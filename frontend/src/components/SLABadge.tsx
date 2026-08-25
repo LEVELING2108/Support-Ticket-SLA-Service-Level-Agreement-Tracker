@@ -1,5 +1,7 @@
 import React from 'react';
 import { SLAState } from '../types';
+import { SLARingIcon } from './icons/CustomIcons';
+import { Check } from 'lucide-react';
 
 interface SLABadgeProps {
   state: SLAState;
@@ -11,7 +13,6 @@ interface SLABadgeProps {
 export const SLABadge: React.FC<SLABadgeProps> = ({
   state,
   remainingMinutes,
-  label,
   isCompleted = false,
 }) => {
   const formatMinutes = (minutes: number) => {
@@ -20,63 +21,51 @@ export const SLABadge: React.FC<SLABadgeProps> = ({
     const mins = minutes % 60;
     if (hours === 0) return `${mins}m`;
     if (mins === 0) return `${hours}h`;
-    return `${hours}h ${mins}m`;
+    return `${hours}h ${mins < 10 ? '0' : ''}${mins}m`;
   };
 
-  const getStyle = () => {
+  if (isCompleted) {
+    return (
+      <div className="inline-flex items-center gap-1 text-emerald-600 font-mono text-xs font-semibold">
+        <Check className="w-3.5 h-3.5 text-emerald-600" />
+        <span>Met</span>
+      </div>
+    );
+  }
+
+  const getTextColor = () => {
     switch (state) {
       case 'ON_TRACK':
-        return {
-          dot: 'bg-emerald-500',
-          text: 'text-emerald-800',
-          bg: 'bg-emerald-50/80 border-emerald-200/70',
-          label: 'On Track',
-          glow: '',
-        };
+        return 'text-emerald-600';
       case 'AT_RISK':
-        return {
-          dot: 'bg-amber-500 animate-subtle-pulse',
-          text: 'text-amber-800',
-          bg: 'bg-amber-50/90 border-amber-300/80 shadow-2xs',
-          label: 'At Risk',
-          glow: 'ring-1 ring-amber-400/30',
-        };
+        return 'text-amber-600';
       case 'BREACHED':
-        return {
-          dot: 'bg-rose-500 animate-subtle-pulse',
-          text: 'text-rose-800',
-          bg: 'bg-rose-50/90 border-rose-300/80 shadow-2xs',
-          label: 'Breached',
-          glow: 'ring-1 ring-rose-400/30',
-        };
+        return 'text-rose-600';
       default:
-        return {
-          dot: 'bg-stone-400',
-          text: 'text-stone-700',
-          bg: 'bg-stone-50 border-stone-200',
-          label: state,
-          glow: '',
-        };
+        return 'text-stone-600';
     }
   };
 
-  const style = getStyle();
+  const getSuffix = () => {
+    switch (state) {
+      case 'AT_RISK':
+        return ' at-risk';
+      case 'BREACHED':
+        return ' overdue';
+      default:
+        return remainingMinutes !== undefined && remainingMinutes < 60 ? ' remaining' : '';
+    }
+  };
+
+  const minutesText = remainingMinutes !== undefined ? formatMinutes(remainingMinutes) : '';
 
   return (
-    <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${style.bg} ${style.glow} transition-all duration-200 hover:scale-[1.02]`}
-    >
-      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${style.dot} shrink-0`}></span>
-      {label && <span className="text-stone-400 font-normal hidden sm:inline">{label}:</span>}
-      <span className={`font-semibold ${style.text}`}>{style.label}</span>
-      {!isCompleted && remainingMinutes !== undefined && remainingMinutes > 0 && (
-        <span className="text-stone-600 font-mono text-[11px] ml-0.5 font-medium bg-white/70 px-1 py-0.2 rounded border border-stone-200/50">
-          {formatMinutes(remainingMinutes)}
-        </span>
-      )}
-      {isCompleted && (
-        <span className="text-emerald-700 font-mono text-xs ml-0.5 font-bold">✓ Met</span>
-      )}
+    <div className="inline-flex items-center gap-1.5 font-mono text-xs">
+      <SLARingIcon state={state} className="w-3.5 h-3.5" />
+      <span className={`font-semibold ${getTextColor()}`}>
+        {minutesText}
+        {getSuffix()}
+      </span>
     </div>
   );
 };

@@ -8,13 +8,13 @@ import {
   CHANGE_STATUS_MUTATION,
   RESOLVE_TICKET_MUTATION,
 } from '../graphql/operations';
+import { Ticket, User, TicketStatus } from '../types';
 import { useAuth } from '../context/useAuth';
-import { Ticket, User, TicketStatus, Comment } from '../types';
 import { PriorityBadge } from './PriorityBadge';
 import { StatusBadge } from './StatusBadge';
-import { SLABadge } from './SLABadge';
-import { X, Send, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { SLARingIcon } from './icons/CustomIcons';
+import { X, Send, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { formatDistanceToNow, format } from 'date-fns';
 
 interface TicketDetailModalProps {
   ticketId: string | null;
@@ -27,27 +27,27 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   onClose,
   onTicketUpdated,
 }) => {
-  const { isAgent } = useAuth();
+  const { user, isAgent } = useAuth();
   const [commentContent, setCommentContent] = useState('');
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [submittingComment, setSubmittingComment] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [{ data, fetching, error }, reexecuteQuery] = useQuery<{ ticket: Ticket }>({
+  const [{ data, fetching, error }, reexecuteTicket] = useQuery<{ ticket: Ticket }>({
     query: GET_TICKET_QUERY,
     variables: { id: ticketId },
     pause: !ticketId,
+    requestPolicy: 'cache-and-network',
   });
 
   const [{ data: agentsData }] = useQuery<{ users: User[] }>({
     query: GET_USERS_QUERY,
     variables: { role: 'AGENT' },
-    pause: !isAgent,
+    pause: !ticketId,
   });
 
-  const [, executeAddComment] = useMutation<{ addComment: Comment }>(ADD_COMMENT_MUTATION);
-  const [, executeAssign] = useMutation<{ assignTicket: Ticket }>(ASSIGN_TICKET_MUTATION);
-  const [, executeChangeStatus] = useMutation<{ changeTicketStatus: Ticket }>(CHANGE_STATUS_MUTATION);
-  const [, executeResolve] = useMutation<{ resolveTicket: Ticket }>(RESOLVE_TICKET_MUTATION);
+  const [, executeAddComment] = useMutation(ADD_COMMENT_MUTATION);
+  const [, executeAssign] = useMutation(ASSIGN_TICKET_MUTATION);
+  const [, executeChangeStatus] = useMutation(CHANGE_STATUS_MUTATION);
+  const [, executeResolve] = useMutation(RESOLVE_TICKET_MUTATION);
 
   if (!ticketId) return null;
 
@@ -56,326 +56,369 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentContent.trim()) return;
-    setActionError(null);
-    setSubmittingComment(true);
 
-    try {
-      const result = await executeAddComment({
-        ticketId,
-        content: commentContent,
-      });
+    setErrorMessage(null);
+    const result = await executeAddComment({
+      ticketId,
+      content: commentContent.trim(),
+    });
 
-      if (result.error) {
-        setActionError(result.error.message.replace('[GraphQL] ', ''));
-      } else {
-        setCommentContent('');
-        reexecuteQuery({ requestPolicy: 'network-only' });
-        onTicketUpdated();
-      }
-    } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : 'Failed to post comment');
-    } finally {
-      setSubmittingComment(false);
+    if (result.error) {
+      setErrorMessage(result.error.message.replace('[GraphQL] ', ''));
+    } else {
+      setCommentContent('');
+      reexecuteTicket({ requestPolicy: 'network-only' });
+      onTicketUpdated();
     }
   };
 
   const handleAssign = async (assigneeId: string) => {
-    setActionError(null);
-    try {
-      const result = await executeAssign({ ticketId, assigneeId });
-      if (result.error) {
-        setActionError(result.error.message.replace('[GraphQL] ', ''));
-      } else {
-        reexecuteQuery({ requestPolicy: 'network-only' });
-        onTicketUpdated();
-      }
-    } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : 'Failed to assign ticket');
+    setErrorMessage(null);
+    const result = await executeAssign({
+      ticketId,
+      assigneeId: assigneeId || null,
+    });
+
+    if (result.error) {
+      setErrorMessage(result.error.message.replace('[GraphQL] ', ''));
+    } else {
+      reexecuteTicket({ requestPolicy: 'network-only' });
+      onTicketUpdated();
     }
   };
 
   const handleStatusChange = async (newStatus: TicketStatus) => {
-    setActionError(null);
-    try {
-      const result = await executeChangeStatus({ ticketId, status: newStatus });
-      if (result.error) {
-        setActionError(result.error.message.replace('[GraphQL] ', ''));
-      } else {
-        reexecuteQuery({ requestPolicy: 'network-only' });
-        onTicketUpdated();
-      }
-    } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : 'Failed to update status');
+    setErrorMessage(null);
+    const result = await executeChangeStatus({
+      ticketId,
+      status: newStatus,
+    });
+
+    if (result.error) {
+      setErrorMessage(result.error.message.replace('[GraphQL] ', ''));
+    } else {
+      reexecuteTicket({ requestPolicy: 'network-only' });
+      onTicketUpdated();
     }
   };
 
   const handleResolve = async () => {
-    setActionError(null);
-    try {
-      const result = await executeResolve({ ticketId });
-      if (result.error) {
-        setActionError(result.error.message.replace('[GraphQL] ', ''));
-      } else {
-        reexecuteQuery({ requestPolicy: 'network-only' });
-        onTicketUpdated();
-      }
-    } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : 'Failed to resolve ticket');
+    setErrorMessage(null);
+    const result = await executeResolve({ ticketId });
+
+    if (result.error) {
+      setErrorMessage(result.error.message.replace('[GraphQL] ', ''));
+    } else {
+      reexecuteTicket({ requestPolicy: 'network-only' });
+      onTicketUpdated();
     }
   };
 
-  const formatTimestamp = (dateStr?: string | null) => {
-    if (!dateStr) return 'N/A';
-    try {
-      return format(new Date(dateStr), 'PPp');
-    } catch {
-      return dateStr;
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const formatMinutes = (minutes: number) => {
+    if (minutes <= 0) return '0m';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours === 0) return `${mins}m`;
+    if (mins === 0) return `${hours}h`;
+    return `${hours}h ${mins < 10 ? '0' : ''}${mins}m`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col relative border border-slate-200/80 overflow-hidden animate-in fade-in zoom-in duration-100">
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
-          <div className="space-y-1.5 pr-6">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {ticket && <PriorityBadge priority={ticket.priority} />}
-              {ticket && <StatusBadge status={ticket.status} />}
-              <span className="text-xs text-slate-400 font-mono">#{ticketId.slice(0, 8)}</span>
-            </div>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
-              {ticket ? ticket.title : 'Loading ticket details...'}
-            </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col border border-stone-200/90 overflow-hidden">
+        {/* Header matching mockup */}
+        <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-2.5">
+            <span className="font-mono text-xs text-stone-500 font-bold">
+              TKT-{ticket?.id ? ticket.id.substring(0, 3).toUpperCase() : '104'}
+            </span>
+            {ticket && (
+              <>
+                <PriorityBadge priority={ticket.priority} />
+                <StatusBadge status={ticket.status} />
+              </>
+            )}
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+            className="p-1 rounded-md text-stone-400 hover:text-stone-700 transition"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Scrollable Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1 text-sm">
-          {actionError && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200/60 text-rose-700 text-xs sm:text-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{actionError}</span>
-            </div>
-          )}
-
-          {fetching && (
-            <div className="space-y-4 animate-pulse">
-              <div className="h-5 bg-slate-100 rounded w-1/3"></div>
-              <div className="h-24 bg-slate-50 rounded"></div>
-            </div>
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {fetching && !ticket && (
+            <div className="py-12 text-center text-xs text-stone-400">Loading ticket details...</div>
           )}
 
           {error && (
-            <div className="p-4 rounded-xl bg-rose-50 text-rose-700 text-sm">
-              Failed to load ticket: {error.message}
+            <div className="p-4 rounded-xl bg-red-50 text-red-600 text-xs">
+              Error loading ticket: {error.message}
             </div>
           )}
 
           {ticket && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Left 2 Cols: Description & Comments */}
-              <div className="md:col-span-2 space-y-5">
-                {/* Description */}
-                <div className="space-y-2">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Description
-                  </span>
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">
-                    {ticket.description}
-                  </div>
+            <div className="space-y-6">
+              {/* Bold Title */}
+              <h2 className="text-xl font-bold text-stone-950 tracking-tight">
+                {ticket.title}
+              </h2>
+
+              {errorMessage && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
+                  {errorMessage}
                 </div>
+              )}
 
-                {/* Comments Section */}
-                <div className="space-y-3 pt-2">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                    Activity &amp; Comments ({ticket.comments.length})
-                  </span>
+              {/* 2-Column Split Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Left Column (65% width) */}
+                <div className="md:col-span-2 space-y-6">
+                  {/* Description Block */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold text-stone-400 tracking-wider uppercase font-mono">
+                      DESCRIPTION
+                    </span>
+                    <div className="text-xs sm:text-sm text-stone-700 leading-relaxed font-normal">
+                      {ticket.description}
+                    </div>
+                  </div>
 
-                  <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                    {ticket.comments.length === 0 ? (
-                      <p className="text-slate-400 italic text-sm">No comments yet.</p>
-                    ) : (
-                      ticket.comments.map((c) => {
-                        const isFirstResponse =
+                  {/* Activity & Comments Block */}
+                  <div className="space-y-3">
+                    <span className="text-[10px] font-bold text-stone-400 tracking-wider uppercase font-mono">
+                      ACTIVITY &amp; COMMENTS
+                    </span>
+
+                    {/* Comments Feed */}
+                    <div className="space-y-3">
+                      {ticket.comments.map((comment) => {
+                        const isFirstResponseAuthor =
                           ticket.firstResponseAt &&
-                          new Date(ticket.firstResponseAt).getTime() ===
-                            new Date(c.createdAt).getTime();
+                          comment.author.role === 'AGENT' &&
+                          comment.author.id !== ticket.reporter.id &&
+                          new Date(comment.createdAt).getTime() ===
+                            new Date(ticket.firstResponseAt).getTime();
 
                         return (
                           <div
-                            key={c.id}
-                            className={`p-4 rounded-xl border text-sm space-y-1.5 ${
-                              isFirstResponse
-                                ? 'border-indigo-200 bg-indigo-50/50 ring-1 ring-indigo-200'
-                                : 'border-slate-100 bg-slate-50/60'
-                            }`}
+                            key={comment.id}
+                            className="p-3.5 rounded-xl border border-stone-200/80 bg-stone-50/40 space-y-2"
                           >
-                            <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-900">{c.author.name}</span>
-                                <span className="text-[11px] text-slate-400 font-mono">
-                                  ({c.author.role})
+                                <div
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white ${
+                                    comment.author.role === 'AGENT'
+                                      ? 'bg-purple-600'
+                                      : 'bg-sky-600'
+                                  }`}
+                                >
+                                  {getInitials(comment.author.name)}
+                                </div>
+                                <span className="text-xs font-bold text-stone-900">
+                                  {comment.author.name}
                                 </span>
-                                {isFirstResponse && (
-                                  <span className="text-[11px] text-indigo-700 bg-indigo-100 font-bold px-2 py-0.5 rounded-full">
-                                    1st Response Milestone
-                                  </span>
-                                )}
+                                <span
+                                  className={`text-[9px] px-1 py-0.2 rounded font-mono font-bold uppercase ${
+                                    comment.author.role === 'AGENT'
+                                      ? 'bg-purple-50 text-purple-700 border border-purple-200/60'
+                                      : 'bg-sky-50 text-sky-700 border border-sky-200/60'
+                                  }`}
+                                >
+                                  {comment.author.role}
+                                </span>
                               </div>
-                              <span className="text-slate-400">{formatTimestamp(c.createdAt)}</span>
+                              <span className="text-[10px] text-stone-400">
+                                {formatDistanceToNow(new Date(comment.createdAt), {
+                                  addSuffix: true,
+                                })}
+                              </span>
                             </div>
-                            <p className="text-slate-800 leading-relaxed text-xs sm:text-sm">
-                              {c.content}
-                            </p>
+
+                            <div className="text-xs text-stone-700 leading-relaxed">
+                              {comment.content}
+                            </div>
+
+                            {/* Green Milestone Box matching mockup */}
+                            {isFirstResponseAuthor && (
+                              <div className="p-2 rounded-lg bg-emerald-50/70 border border-emerald-300 text-emerald-800 text-xs font-mono flex items-center gap-1.5 font-medium">
+                                <span>🎯</span>
+                                <span>1st Response SLA Milestone (Clock Frozen)</span>
+                              </div>
+                            )}
                           </div>
                         );
-                      })
-                    )}
-                  </div>
-
-                  {/* Add Comment Input */}
-                  <form onSubmit={handleAddComment} className="flex gap-2 pt-2">
-                    <input
-                      type="text"
-                      required
-                      value={commentContent}
-                      onChange={(e) => setCommentContent(e.target.value)}
-                      placeholder={
-                        isAgent
-                          ? 'Add agent reply (triggers First Response SLA)...'
-                          : 'Write a comment or follow-up...'
-                      }
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-slate-400 bg-white shadow-2xs"
-                    />
-                    <button
-                      type="submit"
-                      disabled={submittingComment || !commentContent.trim()}
-                      className="px-4.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition shadow-xs disabled:opacity-50"
-                    >
-                      <Send className="w-4 h-4" />
-                      <span>Send</span>
-                    </button>
-                  </form>
-                </div>
-              </div>
-
-              {/* Right Col: SLA Breakdown & Agent Toolbar */}
-              <div className="space-y-4">
-                {/* SLA Summary Box */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3.5">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                    SLA Status (Business Hours)
-                  </span>
-
-                  <div className="space-y-3">
-                    <div className="p-3.5 bg-white rounded-xl border border-slate-200/60 shadow-2xs space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs sm:text-sm text-slate-700 font-bold">1st Response</span>
-                        <SLABadge
-                          state={ticket.sla.firstResponseState}
-                          remainingMinutes={ticket.sla.firstResponseRemainingMinutes}
-                          isCompleted={!!ticket.firstResponseAt}
-                        />
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        <span className="text-slate-400">Due:</span> {formatTimestamp(ticket.sla.firstResponseDueAt)}
-                      </div>
+                      })}
                     </div>
 
-                    <div className="p-3.5 bg-white rounded-xl border border-slate-200/60 shadow-2xs space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs sm:text-sm text-slate-700 font-bold">Resolution</span>
-                        <SLABadge
-                          state={ticket.sla.resolutionState}
-                          remainingMinutes={ticket.sla.resolutionRemainingMinutes}
-                          isCompleted={!!ticket.resolvedAt}
-                        />
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        <span className="text-slate-400">Due:</span> {formatTimestamp(ticket.sla.resolutionDueAt)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Metadata Card */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 space-y-2.5 text-xs sm:text-sm shadow-2xs">
-                  <div>
-                    <span className="text-slate-400 block text-xs font-medium">Reporter</span>
-                    <span className="font-semibold text-slate-900">{ticket.reporter.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-xs font-medium">Assignee</span>
-                    <span className="font-semibold text-slate-900">
-                      {ticket.assignee ? ticket.assignee.name : 'Unassigned'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-xs font-medium">Created</span>
-                    <span className="font-medium text-slate-700">{formatTimestamp(ticket.createdAt)}</span>
-                  </div>
-                </div>
-
-                {/* Agent Actions Toolbar */}
-                {isAgent && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3.5">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                      Agent Controls
-                    </span>
-
-                    <div className="space-y-2.5">
-                      <select
-                        value={ticket.assignee?.id || ''}
-                        onChange={(e) => handleAssign(e.target.value)}
-                        className="w-full text-xs sm:text-sm bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:border-slate-400 shadow-2xs font-medium cursor-pointer"
+                    {/* Reply Input Box with inline Send button */}
+                    <form onSubmit={handleAddComment} className="relative mt-3">
+                      <input
+                        type="text"
+                        value={commentContent}
+                        onChange={(e) => setCommentContent(e.target.value)}
+                        placeholder="Write a reply..."
+                        className="w-full pl-3.5 pr-20 py-2.5 rounded-xl border border-stone-200 text-xs focus:outline-none focus:border-stone-400 bg-white"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!commentContent.trim()}
+                        className="absolute right-1.5 top-1.5 px-3 py-1.5 rounded-lg bg-[#18181b] hover:bg-black text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-all active:scale-95"
                       >
-                        <option value="" disabled>
-                          Assign Agent...
-                        </option>
-                        {agentsData?.users.map((agent) => (
-                          <option key={agent.id} value={agent.id}>
-                            {agent.name}
-                          </option>
-                        ))}
-                      </select>
+                        <Send className="w-3 h-3" />
+                        <span>Send</span>
+                      </button>
+                    </form>
+                  </div>
+                </div>
 
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as TicketStatus[]).map(
-                          (st) => (
-                            <button
-                              key={st}
-                              disabled={ticket.status === st}
-                              onClick={() => handleStatusChange(st)}
-                              className={`text-xs py-2 px-2 rounded-lg font-bold transition ${
-                                ticket.status === st
-                                  ? 'bg-slate-900 text-white shadow-2xs'
-                                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
-                              }`}
-                            >
-                              {st === 'IN_PROGRESS' ? 'IN PROG' : st}
-                            </button>
-                          ),
-                        )}
+                {/* Right Column (35% width) */}
+                <div className="space-y-4">
+                  {/* Card 1: SLA Countdown */}
+                  <div className="p-4 rounded-xl border border-stone-200/80 bg-stone-50/30 space-y-3">
+                    <span className="text-[10px] font-bold text-stone-400 tracking-wider uppercase font-mono block">
+                      SLA COUNTDOWN
+                    </span>
+
+                    {/* First Response */}
+                    <div className="flex items-center gap-3">
+                      <SLARingIcon
+                        state={ticket.sla.firstResponseState}
+                        className="w-6 h-6"
+                      />
+                      <div>
+                        <div className="text-xs font-bold text-stone-900">First Response</div>
+                        <div className="text-xs font-mono font-semibold text-emerald-600">
+                          {ticket.firstResponseAt
+                            ? '✓ Met'
+                            : `${formatMinutes(ticket.sla.firstResponseRemainingMinutes)} remaining`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Resolution SLA */}
+                    <div className="flex items-center gap-3">
+                      <SLARingIcon
+                        state={ticket.sla.resolutionState}
+                        className="w-6 h-6"
+                      />
+                      <div>
+                        <div className="text-xs font-bold text-stone-900">Resolution SLA</div>
+                        <div className="text-xs font-mono font-semibold text-emerald-600">
+                          {ticket.resolvedAt
+                            ? '✓ Met'
+                            : `${formatMinutes(ticket.sla.resolutionRemainingMinutes)} remaining`}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Ticket Info */}
+                  <div className="p-4 rounded-xl border border-stone-200/80 bg-white space-y-2 text-xs">
+                    <span className="text-[10px] font-bold text-stone-400 tracking-wider uppercase font-mono block">
+                      TICKET INFO
+                    </span>
+                    <div className="flex justify-between py-0.5">
+                      <span className="text-stone-400">Reporter</span>
+                      <span className="font-medium text-stone-900">{ticket.reporter.name}</span>
+                    </div>
+                    <div className="flex justify-between py-0.5">
+                      <span className="text-stone-400">Assignee</span>
+                      <span className="font-medium text-stone-900">
+                        {ticket.assignee ? ticket.assignee.name : 'Unassigned'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-0.5">
+                      <span className="text-stone-400">Created</span>
+                      <span className="font-mono text-stone-600">
+                        Today {format(new Date(ticket.createdAt), 'HH:mm')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Agent Actions (Visible to Agents) */}
+                  {isAgent && (
+                    <div className="space-y-3 pt-1">
+                      <span className="text-[10px] font-bold text-stone-400 tracking-wider uppercase font-mono block">
+                        AGENT ACTIONS
+                      </span>
+
+                      {/* Reassign Ticket Dropdown */}
+                      <div className="relative">
+                        <select
+                          value={ticket.assignee?.id || ''}
+                          onChange={(e) => handleAssign(e.target.value)}
+                          className="w-full appearance-none px-3 py-2 rounded-lg border border-stone-200 text-xs font-medium text-stone-700 bg-white focus:outline-none cursor-pointer"
+                        >
+                          <option value="">Reassign Ticket</option>
+                          {agentsData?.users.map((agent) => (
+                            <option key={agent.id} value={agent.id}>
+                              {agent.name} {agent.id === user?.id ? '(Me)' : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="w-3 h-3 text-stone-400 absolute right-3 top-3 pointer-events-none" />
                       </div>
 
+                      {/* Segmented Status Toggle: OPEN | PROG | RESOLVED */}
+                      <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-stone-100 border border-stone-200/60">
+                        <button
+                          onClick={() => handleStatusChange('OPEN')}
+                          className={`py-1 rounded text-xs font-bold font-mono transition ${
+                            ticket.status === 'OPEN'
+                              ? 'bg-white text-stone-900 shadow-2xs'
+                              : 'text-stone-500 hover:text-stone-900'
+                          }`}
+                        >
+                          OPEN
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange('IN_PROGRESS')}
+                          className={`py-1 rounded text-xs font-bold font-mono transition ${
+                            ticket.status === 'IN_PROGRESS'
+                              ? 'bg-white text-stone-900 shadow-2xs'
+                              : 'text-stone-500 hover:text-stone-900'
+                          }`}
+                        >
+                          PROG
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange('RESOLVED')}
+                          className={`py-1 rounded text-xs font-bold font-mono transition ${
+                            ticket.status === 'RESOLVED'
+                              ? 'bg-white text-stone-900 shadow-2xs'
+                              : 'text-stone-500 hover:text-stone-900'
+                          }`}
+                        >
+                          RESOLVED
+                        </button>
+                      </div>
+
+                      {/* Primary Black Resolve Button */}
                       {ticket.status !== 'RESOLVED' && (
                         <button
                           onClick={handleResolve}
-                          className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold transition text-center mt-1 shadow-xs"
+                          className="w-full py-2.5 rounded-lg bg-[#18181b] hover:bg-black text-white text-xs font-semibold transition-all shadow-2xs active:scale-95 flex items-center justify-center gap-1.5"
                         >
-                          Resolve Ticket
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Resolve Ticket</span>
                         </button>
                       )}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}
