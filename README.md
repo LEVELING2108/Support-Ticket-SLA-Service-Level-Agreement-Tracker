@@ -36,20 +36,34 @@ In real-world enterprise customer support, Service Level Agreements (SLAs) are m
 
 ## 💻 Tech Stack
 
+<div align="center">
+
+| Layer | Badges & Technologies |
+|---|---|
+| **Core Runtimes & Languages** | ![TypeScript](https://img.shields.io/badge/TypeScript_5.6-3178C6?style=for-the-badge&logo=typescript&logoColor=white) ![Bun](https://img.shields.io/badge/Bun_1.1-000000?style=for-the-badge&logo=bun&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js_20+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white) |
+| **API & Backend** | ![GraphQL](https://img.shields.io/badge/GraphQL_Yoga_5-E10098?style=for-the-badge&logo=graphql&logoColor=white) ![Prisma](https://img.shields.io/badge/Prisma_5-2D3748?style=for-the-badge&logo=prisma&logoColor=white) ![JWT](https://img.shields.io/badge/JWT_Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white) |
+| **Database & Infrastructure** | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white) ![Docker Compose](https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white) |
+| **Frontend Client** | ![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) ![Vite](https://img.shields.io/badge/Vite_5-646CFF?style=for-the-badge&logo=vite&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white) ![Urql](https://img.shields.io/badge/Urql_GraphQL-000000?style=for-the-badge&logo=graphql&logoColor=white) |
+| **Testing & Quality** | ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white) ![ESLint](https://img.shields.io/badge/ESLint-4B3263?style=for-the-badge&logo=eslint&logoColor=white) ![date-fns](https://img.shields.io/badge/date--fns-770C56?style=for-the-badge&logoColor=white) |
+
+</div>
+
+<br/>
+
 | Component | Technology | Description |
 |---|---|---|
-| **Runtime** | Bun / Node.js (v20+) | High-performance JavaScript/TypeScript runtime |
-| **Language** | TypeScript 5.6 (Strict Mode) | Strict type safety (`noImplicitAny`, zero `any`) |
-| **API Server** | GraphQL Yoga 5.7 | Schema-first GraphQL server with Yoga context |
-| **Code Generation** | `@graphql-codegen` | Generates strict TypeScript resolver types from SDL |
-| **ORM** | Prisma 5.22 | Type-safe query builder, migrations & schema management |
-| **Database** | PostgreSQL 16 (Alpine) | Relational database containerized in Docker |
-| **Date Arithmetic** | `date-fns` & `date-fns-tz` | Pure timezone-aware business calendar math |
-| **Authentication** | `bcryptjs` + `jsonwebtoken` | Secure password hashing (10 rounds) + signed JWTs |
-| **Frontend UI** | React 18 + Vite + Tailwind CSS | Responsive dashboard with custom SVG icons |
-| **GraphQL Client** | Urql 4.1 | Lightweight GraphQL client with auth exchange |
-| **Testing** | Vitest 1.6 | Fast unit and real PostgreSQL integration test runner |
-| **Linting** | ESLint 8.57 + TypeScript-ESLint | Enforced `@typescript-eslint/no-explicit-any: error` |
+| **Runtime** | `Bun` / `Node.js (v20+)` | High-performance JavaScript/TypeScript runtime & package manager |
+| **Language** | `TypeScript 5.6 (Strict Mode)` | Strict type safety (`noImplicitAny`, zero `any`) |
+| **API Server** | `GraphQL Yoga 5.7` | Schema-first GraphQL server with Yoga context & error mapping |
+| **Code Generation** | `@graphql-codegen` | Generates strict TypeScript resolver types from SDL schemas |
+| **ORM** | `Prisma 5.22` | Type-safe query builder, migrations & relational constraints |
+| **Database** | `PostgreSQL 16 (Alpine)` | Relational database containerized in Docker Compose |
+| **Date Arithmetic** | `date-fns` & `date-fns-tz` | Pure timezone-aware business calendar math engine |
+| **Authentication** | `bcryptjs` + `jsonwebtoken` | Secure password hashing (10 salt rounds) + signed JWTs |
+| **Frontend UI** | `React 18` + `Vite` + `Tailwind CSS` | Full-page responsive dashboard with custom handcrafted SVG icons |
+| **GraphQL Client** | `Urql 4.1` | Lightweight GraphQL client with auth exchange |
+| **Testing** | `Vitest 1.6` | High-performance unit and real PostgreSQL integration test runner |
+| **Linting** | `ESLint 8.57` + `@typescript-eslint` | Enforced `@typescript-eslint/no-explicit-any: error` |
 
 ---
 
