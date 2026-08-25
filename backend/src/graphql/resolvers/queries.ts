@@ -1,7 +1,7 @@
 import { QueryResolvers } from '../generated/graphql';
 import { requireAuth } from '../../auth/guards';
-import { computeSLAInfo } from '../../services/sla/slaEngine';
-import { TicketStatus, SLAState, Prisma } from '@prisma/client';
+import { computeSLAInfo, SLAState } from '../../services/sla/slaEngine';
+import { TicketStatus, Prisma } from '@prisma/client';
 
 export const queryResolvers: QueryResolvers = {
   me: async (_parent, _args, context) => {
