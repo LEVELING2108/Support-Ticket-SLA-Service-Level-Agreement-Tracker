@@ -1,14 +1,19 @@
 import React from 'react';
 import { useAuth } from '../context/useAuth';
 import { BrandIcon } from './icons/CustomIcons';
-import { LogOut, Plus } from 'lucide-react';
+import { LogOut, Plus, Home } from 'lucide-react';
 
 interface NavbarProps {
   onOpenCreateTicket: () => void;
   onOpenAuth: () => void;
+  onNavigateHome?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateTicket, onOpenAuth }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  onOpenCreateTicket,
+  onOpenAuth,
+  onNavigateHome,
+}) => {
   const { user, isAuthenticated, isAgent, logout } = useAuth();
 
   return (
@@ -16,15 +21,35 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCreateTicket, onOpenAuth }
       <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <BrandIcon className="w-7 h-7 transition-transform hover:scale-105" />
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-stone-900 tracking-tight">Burdenoff</span>
-            <span className="text-[10px] text-stone-400 font-mono hidden sm:inline">/ SLA Engine</span>
-          </div>
+          <button
+            onClick={onNavigateHome}
+            title="Go to Starting Page"
+            className="flex items-center gap-3 cursor-pointer group text-left"
+          >
+            <BrandIcon className="w-7 h-7 transition-transform group-hover:scale-105" />
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-stone-900 tracking-tight group-hover:text-indigo-600 transition-colors">
+                Burdenoff
+              </span>
+              <span className="text-[10px] text-stone-400 font-mono hidden sm:inline">
+                / SLA Engine
+              </span>
+            </div>
+          </button>
         </div>
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
+          {onNavigateHome && (
+            <button
+              onClick={onNavigateHome}
+              className="text-xs font-semibold text-stone-500 hover:text-stone-900 px-2.5 py-1.5 rounded-lg hover:bg-stone-100 transition-colors flex items-center gap-1.5 hidden sm:inline-flex"
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span>Starting Page</span>
+            </button>
+          )}
+
           {isAuthenticated ? (
             <>
               <button
