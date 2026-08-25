@@ -30,7 +30,7 @@ const MainAppContent: React.FC = () => {
   }>({
     query: GET_DASHBOARD_QUERY,
     requestPolicy: 'cache-and-network',
-    pause: currentView !== 'DASHBOARD',
+    pause: currentView !== 'DASHBOARD' || !isAuthenticated,
   });
 
   const [{ data: holidaysData }] = useQuery<{ holidays: Holiday[] }>({
@@ -145,6 +145,7 @@ const MainAppContent: React.FC = () => {
                 onStatusFilterChange={setStatusFilter}
                 onSLAStateFilterChange={setSLAStateFilter}
                 refreshTrigger={refreshKey}
+                onOpenAuth={() => setIsAuthModalOpen(true)}
               />
             </div>
           </main>

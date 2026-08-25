@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from 'urql';
 import { GET_TICKETS_QUERY, GET_USERS_QUERY } from '../graphql/operations';
 import { TicketStatus, Priority, SLAState, User, TicketConnection } from '../types';
+import { useAuth } from '../context/useAuth';
 import { PriorityBadge } from './PriorityBadge';
 import { StatusBadge } from './StatusBadge';
 import { SLABadge } from './SLABadge';
-import { Search, RotateCw, X, ChevronRight } from 'lucide-react';
+import { Search, RotateCw, X, ChevronRight, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TicketListProps {
@@ -15,6 +16,7 @@ interface TicketListProps {
   onStatusFilterChange: (status?: TicketStatus) => void;
   onSLAStateFilterChange: (slaState?: SLAState) => void;
   refreshTrigger: number;
+  onOpenAuth?: () => void;
 }
 
 export const TicketList: React.FC<TicketListProps> = ({
@@ -24,7 +26,9 @@ export const TicketList: React.FC<TicketListProps> = ({
   onStatusFilterChange,
   onSLAStateFilterChange,
   refreshTrigger,
+  onOpenAuth,
 }) => {
+  const { isAuthenticated } = useAuth();
   const [priorityFilter, setPriorityFilter] = useState<Priority | undefined>(undefined);
   const [assigneeFilter, setAssigneeFilter] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +36,7 @@ export const TicketList: React.FC<TicketListProps> = ({
   const [{ data: agentsData }] = useQuery<{ users: User[] }>({
     query: GET_USERS_QUERY,
     variables: { role: 'AGENT' },
+    pause: !isAuthenticated,
   });
 
   const [{ data, fetching, error }, reexecuteQuery] = useQuery<{ tickets: TicketConnection }>({
@@ -44,13 +49,14 @@ export const TicketList: React.FC<TicketListProps> = ({
       take: 50,
     },
     requestPolicy: 'cache-and-network',
+    pause: !isAuthenticated,
   });
 
   useEffect(() => {
-    if (refreshTrigger > 0) {
+    if (refreshTrigger > 0 && isAuthenticated) {
       reexecuteQuery({ requestPolicy: 'network-only' });
     }
-  }, [refreshTrigger, reexecuteQuery]);
+  }, [refreshTrigger, isAuthenticated, reexecuteQuery]);
 
   const tickets = data?.tickets.nodes || [];
 
@@ -76,6 +82,30 @@ export const TicketList: React.FC<TicketListProps> = ({
 
   const hasActiveFilters =
     !!statusFilter || !!slaStateFilter || !!priorityFilter || !!assigneeFilter || !!searchQuery;
+
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full bg-white rounded-2xl border border-stone-200/90 shadow-xs p-12 text-center space-y-3">
+        <div className="w-10 h-10 mx-auto rounded-full bg-stone-100 flex items-center justify-center text-stone-500">
+          <Lock className="w-4 h-4" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-sm font-bold text-stone-800">Authentication Required</h3>
+          <p className="text-xs text-stone-500 max-w-sm mx-auto">
+            Please sign in with a demo account (Agent or Reporter) to view live support tickets and manage SLA workflows.
+          </p>
+        </div>
+        {onOpenAuth && (
+          <button
+            onClick={onOpenAuth}
+            className="mt-2 inline-flex items-center px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold transition-all shadow-2xs active:scale-95"
+          >
+            Sign In with Demo Account
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-white rounded-2xl border border-stone-200/90 shadow-xs overflow-hidden transition-all">

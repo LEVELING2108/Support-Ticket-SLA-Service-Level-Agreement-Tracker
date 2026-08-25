@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useMutation } from 'urql';
+import { LOGIN_MUTATION } from '../graphql/operations';
+import { AuthPayload } from '../types';
 import { BrandIcon, AgentRoleIcon, ReporterRoleIcon } from './icons/CustomIcons';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 
 interface LandingPageProps {
@@ -10,26 +13,27 @@ interface LandingPageProps {
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard, onOpenAuth }) => {
   const { login } = useAuth();
+  const [loadingRole, setLoadingRole] = useState<'AGENT' | 'REPORTER' | null>(null);
+  const [, executeLogin] = useMutation<{ login: AuthPayload }>(LOGIN_MUTATION);
 
-  const handleQuickLogin = (role: 'AGENT' | 'REPORTER') => {
-    if (role === 'AGENT') {
-      login('demo-agent-token', {
-        id: 'agent-demo-id',
-        email: 'agent@example.com',
-        name: 'Alex Agent',
-        role: 'AGENT',
-        createdAt: new Date().toISOString(),
+  const handleQuickLogin = async (role: 'AGENT' | 'REPORTER') => {
+    setLoadingRole(role);
+    try {
+      const email = role === 'AGENT' ? 'agent@example.com' : 'reporter@example.com';
+      const result = await executeLogin({
+        email,
+        password: 'password123',
       });
-    } else {
-      login('demo-reporter-token', {
-        id: 'reporter-demo-id',
-        email: 'reporter@example.com',
-        name: 'Rachel Reporter',
-        role: 'REPORTER',
-        createdAt: new Date().toISOString(),
-      });
+
+      if (result.data?.login) {
+        login(result.data.login.token, result.data.login.user);
+      }
+    } catch {
+      // fallback
+    } finally {
+      setLoadingRole(null);
+      onEnterDashboard();
     }
-    onEnterDashboard();
   };
 
   return (
@@ -90,18 +94,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterDashboard, onOp
           </button>
 
           <button
+            type="button"
+            disabled={loadingRole !== null}
             onClick={() => handleQuickLogin('AGENT')}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-purple-800 font-semibold text-xs border border-stone-200/90 transition-all shadow-2xs active:scale-95 flex items-center justify-center gap-1.5"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-purple-800 font-semibold text-xs border border-stone-200/90 transition-all shadow-2xs active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
-            <AgentRoleIcon className="w-3.5 h-3.5" />
+            {loadingRole === 'AGENT' ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <AgentRoleIcon className="w-3.5 h-3.5" />
+            )}
             <span>Enter as Agent</span>
           </button>
 
           <button
+            type="button"
+            disabled={loadingRole !== null}
             onClick={() => handleQuickLogin('REPORTER')}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-stone-700 font-semibold text-xs border border-stone-200/90 transition-all shadow-2xs active:scale-95 flex items-center justify-center gap-1.5"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-stone-700 font-semibold text-xs border border-stone-200/90 transition-all shadow-2xs active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50"
           >
-            <ReporterRoleIcon className="w-3.5 h-3.5" />
+            {loadingRole === 'REPORTER' ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <ReporterRoleIcon className="w-3.5 h-3.5" />
+            )}
             <span>Enter as Reporter</span>
           </button>
         </div>
