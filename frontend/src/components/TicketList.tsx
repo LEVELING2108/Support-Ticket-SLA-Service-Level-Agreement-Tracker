@@ -78,18 +78,18 @@ export const TicketList: React.FC<TicketListProps> = ({
     !!statusFilter || !!slaStateFilter || !!priorityFilter || !!assigneeFilter || !!searchQuery;
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+    <div className="w-full bg-white rounded-2xl border border-stone-200/90 shadow-xs overflow-hidden transition-all">
       {/* Search & Filter Strip */}
-      <div className="p-4 sm:p-4.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-4 sm:p-4.5 border-b border-stone-100 flex flex-wrap items-center justify-between gap-3 bg-stone-50/40">
         <div className="flex items-center gap-2.5 flex-1 min-w-[280px]">
           <div className="relative flex-1 max-w-sm">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title, reporter, or assignee..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-slate-400 bg-white shadow-2xs"
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-stone-200 text-xs sm:text-sm focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-200/60 bg-white shadow-2xs transition-all"
             />
           </div>
 
@@ -99,7 +99,7 @@ export const TicketList: React.FC<TicketListProps> = ({
             onChange={(e) =>
               onStatusFilterChange((e.target.value as TicketStatus) || undefined)
             }
-            className="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-slate-400 bg-white font-medium shadow-2xs cursor-pointer"
+            className="px-3 py-2 rounded-xl border border-stone-200 text-xs sm:text-sm text-stone-700 focus:outline-none focus:border-stone-400 bg-white font-medium shadow-2xs cursor-pointer hover:border-stone-300 transition-colors"
           >
             <option value="">Status: All</option>
             <option value="OPEN">Open</option>
@@ -114,7 +114,7 @@ export const TicketList: React.FC<TicketListProps> = ({
             onChange={(e) =>
               setPriorityFilter((e.target.value as Priority) || undefined)
             }
-            className="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-slate-400 bg-white font-medium shadow-2xs cursor-pointer"
+            className="px-3 py-2 rounded-xl border border-stone-200 text-xs sm:text-sm text-stone-700 focus:outline-none focus:border-stone-400 bg-white font-medium shadow-2xs cursor-pointer hover:border-stone-300 transition-colors"
           >
             <option value="">Priority: All</option>
             <option value="URGENT">Urgent</option>
@@ -129,7 +129,7 @@ export const TicketList: React.FC<TicketListProps> = ({
             onChange={(e) =>
               onSLAStateFilterChange((e.target.value as SLAState) || undefined)
             }
-            className="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-slate-400 bg-white font-medium shadow-2xs cursor-pointer"
+            className="px-3 py-2 rounded-xl border border-stone-200 text-xs sm:text-sm text-stone-700 focus:outline-none focus:border-stone-400 bg-white font-medium shadow-2xs cursor-pointer hover:border-stone-300 transition-colors"
           >
             <option value="">SLA: All</option>
             <option value="ON_TRACK">On Track</option>
@@ -141,7 +141,7 @@ export const TicketList: React.FC<TicketListProps> = ({
           <select
             value={assigneeFilter || ''}
             onChange={(e) => setAssigneeFilter(e.target.value || undefined)}
-            className="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-slate-400 bg-white font-medium shadow-2xs cursor-pointer hidden md:inline-block"
+            className="px-3 py-2 rounded-xl border border-stone-200 text-xs sm:text-sm text-stone-700 focus:outline-none focus:border-stone-400 bg-white font-medium shadow-2xs cursor-pointer hover:border-stone-300 transition-colors hidden md:inline-block"
           >
             <option value="">Assignee: All</option>
             {agentsData?.users.map((agent) => (
@@ -155,7 +155,7 @@ export const TicketList: React.FC<TicketListProps> = ({
             <button
               onClick={clearFilters}
               title="Reset all filters"
-              className="text-xs sm:text-sm text-slate-500 hover:text-slate-900 font-semibold underline flex items-center gap-1 ml-1"
+              className="text-xs sm:text-sm text-stone-500 hover:text-stone-900 font-semibold underline flex items-center gap-1 ml-1 transition-colors"
             >
               <X className="w-3.5 h-3.5" />
               Reset
@@ -165,7 +165,7 @@ export const TicketList: React.FC<TicketListProps> = ({
 
         <button
           onClick={() => reexecuteQuery({ requestPolicy: 'network-only' })}
-          className="p-2 text-slate-400 hover:text-slate-700 transition rounded-lg hover:bg-slate-50 border border-slate-200/80 shadow-2xs"
+          className="p-2 text-stone-400 hover:text-stone-700 transition rounded-xl hover:bg-white border border-stone-200/80 shadow-2xs active:scale-95"
           title="Refresh table"
         >
           <RotateCw className={`w-4 h-4 ${fetching ? 'animate-spin' : ''}`} />
@@ -181,10 +181,13 @@ export const TicketList: React.FC<TicketListProps> = ({
 
       {/* Empty State */}
       {!fetching && filteredTickets.length === 0 && (
-        <div className="p-16 text-center text-slate-400 text-sm">
-          <p className="font-semibold text-slate-700 text-base">No tickets found</p>
-          <p className="mt-1 text-slate-400 text-xs sm:text-sm">
-            {hasActiveFilters ? 'Try adjusting your filters.' : 'Click "New Ticket" to create your first ticket.'}
+        <div className="p-16 text-center text-stone-400 text-sm">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-stone-100 flex items-center justify-center text-stone-400">
+            ✓
+          </div>
+          <p className="font-semibold text-stone-700 text-base">All clear — no tickets found</p>
+          <p className="mt-1 text-stone-400 text-xs sm:text-sm">
+            {hasActiveFilters ? 'Try adjusting your filters.' : 'Click "New Ticket" to raise a support issue.'}
           </p>
         </div>
       )}
@@ -194,7 +197,7 @@ export const TicketList: React.FC<TicketListProps> = ({
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left text-xs sm:text-sm border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <tr className="border-b border-stone-100 bg-stone-50/70 text-xs font-bold text-stone-400 uppercase tracking-wider">
                 <th className="py-3 px-5">Priority &amp; Status</th>
                 <th className="py-3 px-5">Ticket Summary</th>
                 <th className="py-3 px-5 hidden md:table-cell">Reporter / Assignee</th>
@@ -204,12 +207,12 @@ export const TicketList: React.FC<TicketListProps> = ({
                 <th className="py-3 px-4 w-8"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-stone-100">
               {filteredTickets.map((ticket) => (
                 <tr
                   key={ticket.id}
                   onClick={() => onSelectTicket(ticket.id)}
-                  className="hover:bg-slate-50/90 transition cursor-pointer group"
+                  className="hover:bg-amber-50/20 transition-all duration-150 cursor-pointer group hover:shadow-xs"
                 >
                   {/* Priority & Status */}
                   <td className="py-3.5 px-5 align-middle whitespace-nowrap">
@@ -221,21 +224,21 @@ export const TicketList: React.FC<TicketListProps> = ({
 
                   {/* Title & Description */}
                   <td className="py-3.5 px-5 align-middle max-w-md">
-                    <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition text-sm sm:text-base truncate">
+                    <div className="font-bold text-stone-900 group-hover:text-indigo-600 transition-colors text-sm sm:text-base truncate">
                       {ticket.title}
                     </div>
-                    <div className="text-xs text-slate-500 truncate mt-0.5 font-normal">
+                    <div className="text-xs text-stone-500 truncate mt-0.5 font-normal">
                       {ticket.description}
                     </div>
                   </td>
 
                   {/* Reporter / Assignee */}
-                  <td className="py-3.5 px-5 align-middle whitespace-nowrap hidden md:table-cell text-xs text-slate-600">
+                  <td className="py-3.5 px-5 align-middle whitespace-nowrap hidden md:table-cell text-xs text-stone-600">
                     <div>
-                      <span className="text-slate-400">By:</span> <strong className="font-medium text-slate-800">{ticket.reporter.name}</strong>
+                      <span className="text-stone-400">By:</span> <strong className="font-medium text-stone-800">{ticket.reporter.name}</strong>
                     </div>
-                    <div className="text-slate-600 mt-0.5">
-                      <span className="text-slate-400">To:</span> <span className="font-medium">{ticket.assignee ? ticket.assignee.name : 'Unassigned'}</span>
+                    <div className="text-stone-600 mt-0.5">
+                      <span className="text-stone-400">To:</span> <span className="font-medium">{ticket.assignee ? ticket.assignee.name : 'Unassigned'}</span>
                     </div>
                   </td>
 
@@ -258,13 +261,13 @@ export const TicketList: React.FC<TicketListProps> = ({
                   </td>
 
                   {/* Created Date */}
-                  <td className="py-3.5 px-5 align-middle text-right whitespace-nowrap text-xs text-slate-400 hidden lg:table-cell font-mono">
+                  <td className="py-3.5 px-5 align-middle text-right whitespace-nowrap text-xs text-stone-400 hidden lg:table-cell font-mono">
                     {format(new Date(ticket.createdAt), 'MMM d, h:mm a')}
                   </td>
 
                   {/* Arrow */}
                   <td className="py-3.5 px-4 align-middle text-right">
-                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-700 transition" />
+                    <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-700 group-hover:translate-x-0.5 transition-all duration-150" />
                   </td>
                 </tr>
               ))}
