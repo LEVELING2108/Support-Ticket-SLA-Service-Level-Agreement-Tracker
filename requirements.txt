@@ -1,0 +1,47 @@
+# ==============================================================================
+# Support Ticket & SLA Tracker — Project Requirements & Prerequisites
+# ==============================================================================
+
+# System & Runtime Requirements:
+# ------------------------------------------------------------------------------
+runtime_bun>=1.1.0                 # High-performance JS/TS runtime & package manager (or Node.js >= 20.0.0)
+runtime_nodejs>=20.0.0             # Optional alternative runtime (LTS)
+docker>=24.0.0                     # Container engine for running PostgreSQL 16
+docker_compose>=2.20.0             # Multi-container orchestration tool
+database_postgresql==16-alpine     # Primary relational database container
+
+# Backend Core & API Dependencies (backend/package.json):
+# ------------------------------------------------------------------------------
+@prisma/client==5.22.0             # Next-generation TypeScript ORM client
+prisma==5.22.0                     # Prisma CLI for schema migrations & generation
+graphql-yoga==5.7.0                # Schema-first GraphQL server engine
+graphql==16.9.0                    # Reference implementation of GraphQL for JavaScript
+bcryptjs==2.4.3                    # Password hashing library (10 salt rounds)
+jsonwebtoken==9.0.2                # JSON Web Token (JWT) implementation for auth
+date-fns==3.6.0                    # Modern JavaScript date utility library
+date-fns-tz==3.2.0                 # Timezone-aware date calculations for business hours
+dotenv==16.4.5                     # Environment variable loader from .env file
+
+# Backend Development & Testing Tooling:
+# ------------------------------------------------------------------------------
+typescript==5.6.3                  # Strict TypeScript compiler (noImplicitAny, strict: true)
+vitest==1.6.0                      # High-performance unit & integration test runner
+eslint==8.57.0                     # Code quality linter
+@typescript-eslint/eslint-plugin==7.18.0  # ESLint rules for strict TypeScript
+@typescript-eslint/parser==7.18.0         # TypeScript parser for ESLint
+@graphql-codegen/cli==5.0.3        # GraphQL code generation CLI
+@graphql-codegen/typescript==4.0.9 # TypeScript typings generator for GraphQL schema
+@graphql-codegen/typescript-resolvers==4.2.1 # Strongly-typed resolver signatures
+tsx==4.19.0                        # TypeScript execution tool with watch mode
+
+# Frontend UI & Client Dependencies (frontend/package.json):
+# ------------------------------------------------------------------------------
+react==18.3.1                      # Declarative UI component library
+react-dom==18.3.1                  # React DOM renderer
+urql==4.1.4                        # Highly customizable GraphQL client
+lucide-react==0.454.0              # Minimalist UI icon set
+tailwindcss==3.4.14                # Utility-first CSS framework
+postcss==8.4.47                    # CSS transformation tool
+autoprefixer==10.4.20              # PostCSS plugin for vendor prefixes
+vite==5.4.9                        # Ultra-fast frontend build tool and dev server
+@vitejs/plugin-react==4.3.3        # Vite plugin for React Fast Refresh
