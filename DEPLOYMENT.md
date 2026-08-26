@@ -35,8 +35,8 @@ This guide walks you through deploying the **Support Ticket & SLA Tracker** live
    - **Name**: `burdenoff-backend`
    - **Root Directory**: `backend`
    - **Runtime**: `Node` (or `Bun`)
-   - **Build Command**: `bun install && bun run build` (or `npm install && npm run build`)
-   - **Start Command**: `bun run start` (or `node dist/src/server.js`)
+   - **Build Command**: `npm install --include=dev && npm run build` (or `bun install && bun run build`)
+   - **Start Command**: `npm start` (or `node dist/server.js`)
 4. Add **Environment Variables**:
    - `DATABASE_URL`: *(paste the PostgreSQL connection string from step 1)*
    - `JWT_SECRET`: `super-secret-jwt-key-burdenoff-support-tracker-2026`
