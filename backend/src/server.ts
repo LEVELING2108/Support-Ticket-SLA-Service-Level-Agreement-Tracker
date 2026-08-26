@@ -28,7 +28,7 @@ export const yoga = createYoga({
 export const server = createServer(yoga);
 
 if (process.env.NODE_ENV !== 'test') {
-  server.listen(port, () => {
-    console.info(`GraphQL Yoga server running at http://localhost:${port}/graphql`);
+  server.listen(port, '0.0.0.0', () => {
+    console.info(`GraphQL Yoga server running at http://0.0.0.0:${port}/graphql`);
   });
 }

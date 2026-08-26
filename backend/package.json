@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "description": "Backend service for Support Ticket & SLA Tracker",
-  "main": "dist/src/server.js",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc",
-    "start": "node dist/src/server.js",
+    "start": "node dist/server.js",
     "start:tsx": "tsx src/server.ts",
     "codegen": "graphql-codegen --config codegen.yml",
     "gendb": "prisma generate && prisma migrate dev",
