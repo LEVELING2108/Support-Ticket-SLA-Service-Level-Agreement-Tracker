@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { UserRole } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import { hashPassword, verifyPassword } from '../../src/auth/password';
 import { signToken, verifyToken, AuthUser } from '../../src/auth/jwt';
 import { requireAuth, requireAgent, GraphQLContext } from '../../src/auth/guards';

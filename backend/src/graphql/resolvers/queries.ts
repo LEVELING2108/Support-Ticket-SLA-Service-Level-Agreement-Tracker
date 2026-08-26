@@ -1,6 +1,6 @@
-import { QueryResolvers } from '../generated/graphql';
+import { QueryResolvers, UserRole } from '../generated/graphql';
 import { requireAuth } from '../../auth/guards';
-import { computeSLAInfo, SLAState } from '../../services/sla/slaEngine';
+import { computeSLAInfo, SLAState, Priority } from '../../services/sla/slaEngine';
 import { TicketStatus, Prisma } from '@prisma/client';
 
 export const queryResolvers: QueryResolvers = {
@@ -18,7 +18,7 @@ export const queryResolvers: QueryResolvers = {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
+      role: user.role as UserRole,
       createdAt: user.createdAt.toISOString(),
     };
   },
@@ -26,14 +26,14 @@ export const queryResolvers: QueryResolvers = {
   users: async (_parent, args, context) => {
     requireAuth(context);
     const users = await context.prisma.user.findMany({
-      where: args.role ? { role: args.role } : undefined,
+      where: args.role ? { role: args.role as import('@prisma/client').UserRole } : undefined,
       orderBy: { name: 'asc' },
     });
     return users.map((u) => ({
       id: u.id,
       email: u.email,
       name: u.name,
-      role: u.role,
+      role: u.role as UserRole,
       createdAt: u.createdAt.toISOString(),
     }));
   },
@@ -76,10 +76,10 @@ export const queryResolvers: QueryResolvers = {
     const whereClause: Prisma.TicketWhereInput = {};
 
     if (args.status) {
-      whereClause.status = args.status;
+      whereClause.status = args.status as TicketStatus;
     }
     if (args.priority) {
-      whereClause.priority = args.priority;
+      whereClause.priority = args.priority as import('@prisma/client').Priority;
     }
     if (args.assigneeId) {
       whereClause.assigneeId = args.assigneeId;
@@ -91,25 +91,21 @@ export const queryResolvers: QueryResolvers = {
 
       const allMatching = await context.prisma.ticket.findMany({
         where: whereClause,
-        include: {
-          reporter: true,
-          assignee: true,
-          comments: { include: { author: true }, orderBy: { createdAt: 'asc' } },
-        },
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        orderBy: { createdAt: 'desc' },
       });
 
       const filtered = allMatching.filter((t) => {
         const sla = computeSLAInfo(
           {
             createdAt: t.createdAt,
-            priority: t.priority,
+            priority: t.priority as Priority,
             firstResponseAt: t.firstResponseAt,
             resolvedAt: t.resolvedAt,
           },
           holidayItems,
         );
-        return sla.firstResponseState === args.slaState || sla.resolutionState === args.slaState;
+        const filterState = args.slaState as unknown as SLAState;
+        return sla.firstResponseState === filterState || sla.resolutionState === filterState;
       });
 
       let startIndex = 0;
@@ -133,25 +129,21 @@ export const queryResolvers: QueryResolvers = {
       };
     }
 
-    const queryOptions: Prisma.TicketFindManyArgs = {
+    // Standard cursor pagination
+    const findArgs: Prisma.TicketFindManyArgs = {
       where: whereClause,
       take: take + 1,
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      include: {
-        reporter: true,
-        assignee: true,
-        comments: { include: { author: true }, orderBy: { createdAt: 'asc' } },
-      },
+      orderBy: { createdAt: 'desc' },
     };
 
     if (args.cursor) {
-      queryOptions.cursor = { id: args.cursor };
-      queryOptions.skip = 1;
+      findArgs.cursor = { id: args.cursor };
+      findArgs.skip = 1;
     }
 
-    const tickets = await context.prisma.ticket.findMany(queryOptions);
-    const hasNextPage = tickets.length > take;
-    const nodes = hasNextPage ? tickets.slice(0, take) : tickets;
+    const items = await context.prisma.ticket.findMany(findArgs);
+    const hasNextPage = items.length > take;
+    const nodes = hasNextPage ? items.slice(0, take) : items;
     const endCursor = nodes.length > 0 ? (nodes[nodes.length - 1]?.id ?? null) : null;
 
     return {
@@ -166,10 +158,9 @@ export const queryResolvers: QueryResolvers = {
   dashboard: async (_parent, _args, context) => {
     requireAuth(context);
 
-    const [openTickets, inProgressTickets, holidays, activeTickets] = await Promise.all([
+    const [openTickets, inProgressTickets, allTickets, holidays] = await Promise.all([
       context.prisma.ticket.count({ where: { status: TicketStatus.OPEN } }),
       context.prisma.ticket.count({ where: { status: TicketStatus.IN_PROGRESS } }),
-      context.prisma.holiday.findMany(),
       context.prisma.ticket.findMany({
         where: {
           status: { in: [TicketStatus.OPEN, TicketStatus.IN_PROGRESS] },
@@ -181,31 +172,28 @@ export const queryResolvers: QueryResolvers = {
           resolvedAt: true,
         },
       }),
+      context.prisma.holiday.findMany(),
     ]);
 
     const holidayItems = holidays.map((h) => ({ date: h.date, name: h.name }));
+
     let atRiskTickets = 0;
     let breachedTickets = 0;
 
-    for (const ticket of activeTickets) {
+    for (const t of allTickets) {
       const sla = computeSLAInfo(
         {
-          createdAt: ticket.createdAt,
-          priority: ticket.priority,
-          firstResponseAt: ticket.firstResponseAt,
-          resolvedAt: ticket.resolvedAt,
+          createdAt: t.createdAt,
+          priority: t.priority as Priority,
+          firstResponseAt: t.firstResponseAt,
+          resolvedAt: t.resolvedAt,
         },
         holidayItems,
       );
 
-      const isBreached =
-        sla.firstResponseState === SLAState.BREACHED || sla.resolutionState === SLAState.BREACHED;
-      const isAtRisk =
-        sla.firstResponseState === SLAState.AT_RISK || sla.resolutionState === SLAState.AT_RISK;
-
-      if (isBreached) {
+      if (sla.firstResponseState === SLAState.BREACHED || sla.resolutionState === SLAState.BREACHED) {
         breachedTickets++;
-      } else if (isAtRisk) {
+      } else if (sla.firstResponseState === SLAState.AT_RISK || sla.resolutionState === SLAState.AT_RISK) {
         atRiskTickets++;
       }
     }

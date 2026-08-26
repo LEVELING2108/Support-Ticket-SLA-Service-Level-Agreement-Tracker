@@ -1,9 +1,8 @@
-import { TicketResolvers } from '../generated/graphql';
+import { TicketResolvers, UserRole, SlaState } from '../generated/graphql';
 import { computeSLAInfo, Priority } from '../../services/sla/slaEngine';
 
 export const ticketResolvers: TicketResolvers = {
   reporter: async (parent, _args, context) => {
-    // If reporter is already loaded on parent
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const p = parent as unknown as { reporter?: import('@prisma/client').User; reporterId?: string };
     if (p.reporter) {
@@ -11,7 +10,7 @@ export const ticketResolvers: TicketResolvers = {
         id: p.reporter.id,
         email: p.reporter.email,
         name: p.reporter.name,
-        role: p.reporter.role,
+        role: p.reporter.role as UserRole,
         createdAt: p.reporter.createdAt.toISOString(),
       };
     }
@@ -26,12 +25,13 @@ export const ticketResolvers: TicketResolvers = {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
+      role: user.role as UserRole,
       createdAt: user.createdAt.toISOString(),
     };
   },
 
   assignee: async (parent, _args, context) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const p = parent as unknown as { assignee?: import('@prisma/client').User | null; assigneeId?: string | null };
     if (p.assignee !== undefined) {
       if (!p.assignee) return null;
@@ -39,28 +39,32 @@ export const ticketResolvers: TicketResolvers = {
         id: p.assignee.id,
         email: p.assignee.email,
         name: p.assignee.name,
-        role: p.assignee.role,
+        role: p.assignee.role as UserRole,
         createdAt: p.assignee.createdAt.toISOString(),
       };
     }
-    if (!p.assigneeId) {
+    const assigneeId = p.assigneeId;
+    if (!assigneeId) {
       return null;
     }
     const user = await context.prisma.user.findUnique({
-      where: { id: p.assigneeId },
+      where: { id: assigneeId },
     });
-    if (!user) return null;
+    if (!user) {
+      return null;
+    }
     return {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
+      role: user.role as UserRole,
       createdAt: user.createdAt.toISOString(),
     };
   },
 
   comments: async (parent, _args, context) => {
-    const p = parent as unknown as { comments?: Array<import('@prisma/client').Comment & { author: import('@prisma/client').User }> };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const p = parent as unknown as { comments?: Array<import('@prisma/client').Comment & { author: import('@prisma/client').User }>; id: string };
     if (p.comments) {
       return p.comments.map((c) => ({
         id: c.id,
@@ -71,13 +75,13 @@ export const ticketResolvers: TicketResolvers = {
           id: c.author.id,
           email: c.author.email,
           name: c.author.name,
-          role: c.author.role,
+          role: c.author.role as UserRole,
           createdAt: c.author.createdAt.toISOString(),
         },
       }));
     }
     const comments = await context.prisma.comment.findMany({
-      where: { ticketId: parent.id },
+      where: { ticketId: p.id },
       include: { author: true },
       orderBy: { createdAt: 'asc' },
     });
@@ -90,59 +94,49 @@ export const ticketResolvers: TicketResolvers = {
         id: c.author.id,
         email: c.author.email,
         name: c.author.name,
-        role: c.author.role,
+        role: c.author.role as UserRole,
         createdAt: c.author.createdAt.toISOString(),
       },
     }));
   },
 
-  createdAt: (parent) => {
-    const p = parent as unknown as { createdAt: Date | string };
-    return typeof p.createdAt === 'string' ? p.createdAt : p.createdAt.toISOString();
-  },
-
-  firstResponseAt: (parent) => {
-    const p = parent as unknown as { firstResponseAt?: Date | string | null };
-    if (!p.firstResponseAt) return null;
-    return typeof p.firstResponseAt === 'string' ? p.firstResponseAt : p.firstResponseAt.toISOString();
-  },
-
-  resolvedAt: (parent) => {
-    const p = parent as unknown as { resolvedAt?: Date | string | null };
-    if (!p.resolvedAt) return null;
-    return typeof p.resolvedAt === 'string' ? p.resolvedAt : p.resolvedAt.toISOString();
-  },
-
   sla: async (parent, _args, context) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const p = parent as unknown as {
       createdAt: Date | string;
-      priority: Priority;
+      priority: import('@prisma/client').Priority;
       firstResponseAt?: Date | string | null;
       resolvedAt?: Date | string | null;
     };
 
     const holidays = await context.prisma.holiday.findMany();
+    const holidayItems = holidays.map((h) => ({ date: h.date, name: h.name }));
 
-    const createdAtDate = typeof p.createdAt === 'string' ? new Date(p.createdAt) : p.createdAt;
-    const firstResponseAtDate = p.firstResponseAt
-      ? typeof p.firstResponseAt === 'string'
+    const createdAt = typeof p.createdAt === 'string' ? new Date(p.createdAt) : p.createdAt;
+    const firstResponseAt =
+      typeof p.firstResponseAt === 'string'
         ? new Date(p.firstResponseAt)
-        : p.firstResponseAt
-      : null;
-    const resolvedAtDate = p.resolvedAt
-      ? typeof p.resolvedAt === 'string'
-        ? new Date(p.resolvedAt)
-        : p.resolvedAt
-      : null;
+        : p.firstResponseAt ?? null;
+    const resolvedAt =
+      typeof p.resolvedAt === 'string' ? new Date(p.resolvedAt) : p.resolvedAt ?? null;
 
-    return computeSLAInfo(
+    const result = computeSLAInfo(
       {
-        createdAt: createdAtDate,
-        priority: p.priority,
-        firstResponseAt: firstResponseAtDate,
-        resolvedAt: resolvedAtDate,
+        createdAt,
+        priority: p.priority as Priority,
+        firstResponseAt,
+        resolvedAt,
       },
-      holidays.map((h) => ({ date: h.date, name: h.name })),
+      holidayItems,
     );
+
+    return {
+      firstResponseDueAt: result.firstResponseDueAt,
+      resolutionDueAt: result.resolutionDueAt,
+      firstResponseState: result.firstResponseState as unknown as SlaState,
+      resolutionState: result.resolutionState as unknown as SlaState,
+      firstResponseRemainingMinutes: result.firstResponseRemainingMinutes,
+      resolutionRemainingMinutes: result.resolutionRemainingMinutes,
+    };
   },
 };

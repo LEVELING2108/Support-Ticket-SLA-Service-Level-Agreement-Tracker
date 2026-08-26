@@ -1,0 +1,31 @@
+services:
+  # Backend GraphQL API Service
+  - type: web
+    name: burdenoff-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: bun install && bun run build
+    startCommand: bun run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: burdenoff-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: BUSINESS_TIMEZONE
+        value: Asia/Kolkata
+      - key: CORS_ORIGIN
+        value: "*"
+
+databases:
+  # Managed PostgreSQL Database
+  - name: burdenoff-db
+    plan: free
+    databaseName: burdenoff
+    user: burdenoff_user

@@ -5,7 +5,8 @@ import { AuthService } from '../../src/services/auth/authService';
 import { TicketService } from '../../src/services/ticket/ticketService';
 import { computeSLAInfo, SLAState } from '../../src/services/sla/slaEngine';
 import { AppGraphQLError } from '../../src/errors/AppError';
-
+import path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
 
 const prisma = new PrismaClient();
@@ -197,7 +198,7 @@ describe('Real PostgreSQL Integration Flow', () => {
     const slaInfo = computeSLAInfo(
       {
         createdAt: resolvedTicket.createdAt,
-        priority: resolvedTicket.priority,
+        priority: resolvedTicket.priority as unknown as import('../../src/services/sla/slaEngine').Priority,
         firstResponseAt: resolvedTicket.firstResponseAt,
         resolvedAt: resolvedTicket.resolvedAt,
       },

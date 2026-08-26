@@ -62,7 +62,7 @@ export async function main() {
   const highTicket = await prisma.ticket.create({
     data: {
       title: 'High CPU utilization on analytics cluster',
-      description: 'Analytics microservice memory and CPU spiked above 90%.',
+      description: 'Production analytics workers spiking to 99% CPU during ingest.',
       priority: Priority.HIGH,
       status: TicketStatus.IN_PROGRESS,
       reporterId: reporter.id,
@@ -73,7 +73,7 @@ export async function main() {
   const mediumTicket = await prisma.ticket.create({
     data: {
       title: 'Export to CSV formatting issue',
-      description: 'Exported CSV files contain misplaced headers when special characters are used.',
+      description: 'Exported transaction dates missing leading zeros in month column.',
       priority: Priority.MEDIUM,
       status: TicketStatus.OPEN,
       reporterId: reporter.id,
@@ -83,21 +83,24 @@ export async function main() {
   const lowTicket = await prisma.ticket.create({
     data: {
       title: 'Update copyright year in footer',
-      description: 'Footer still says 2025 on marketing sub-pages.',
+      description: 'Footer currently says 2025 instead of 2026 on landing pages.',
       priority: Priority.LOW,
       status: TicketStatus.OPEN,
       reporterId: reporter.id,
     },
   });
 
-  console.info(`Seeded tickets: URGENT (${urgentTicket.id}), HIGH (${highTicket.id}), MEDIUM (${mediumTicket.id}), LOW (${lowTicket.id})`);
+  console.info(
+    `Seeded tickets: URGENT (${urgentTicket.id}), HIGH (${highTicket.id}), MEDIUM (${mediumTicket.id}), LOW (${lowTicket.id})`,
+  );
+
   console.info('Database seed completed successfully!');
 }
 
-if (require.main === module) {
+if (process.env.NODE_ENV !== 'test') {
   main()
     .catch((e) => {
-      console.error('Error seeding database:', e);
+      console.error('Error during database seed:', e);
       process.exit(1);
     })
     .finally(async () => {

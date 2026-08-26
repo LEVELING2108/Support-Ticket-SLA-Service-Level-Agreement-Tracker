@@ -1,30 +1,44 @@
-import { MutationResolvers } from '../generated/graphql';
+import { MutationResolvers, UserRole } from '../generated/graphql';
 import { AuthService } from '../../services/auth/authService';
 import { TicketService } from '../../services/ticket/ticketService';
 import { requireAuth, requireAgent } from '../../auth/guards';
-import { Priority, TicketStatus } from '@prisma/client';
+import { Priority, TicketStatus, UserRole as PrismaUserRole } from '@prisma/client';
 
 export const mutationResolvers: MutationResolvers = {
   register: async (_parent, args, context) => {
-    return AuthService.register(
+    const res = await AuthService.register(
       {
         name: args.name,
         email: args.email,
         password: args.password,
-        role: args.role,
+        role: args.role as PrismaUserRole,
       },
       context.prisma,
     );
+    return {
+      token: res.token,
+      user: {
+        ...res.user,
+        role: res.user.role as unknown as UserRole,
+      },
+    };
   },
 
   login: async (_parent, args, context) => {
-    return AuthService.login(
+    const res = await AuthService.login(
       {
         email: args.email,
         password: args.password,
       },
       context.prisma,
     );
+    return {
+      token: res.token,
+      user: {
+        ...res.user,
+        role: res.user.role as unknown as UserRole,
+      },
+    };
   },
 
   createTicket: async (_parent, args, context) => {
@@ -85,7 +99,7 @@ export const mutationResolvers: MutationResolvers = {
         id: author.id,
         email: author.email,
         name: author.name,
-        role: author.role,
+        role: author.role as unknown as UserRole,
         createdAt: author.createdAt.toISOString(),
       },
     };

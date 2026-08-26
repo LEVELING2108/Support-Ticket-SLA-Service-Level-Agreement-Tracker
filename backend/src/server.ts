@@ -16,6 +16,11 @@ export const yoga = createYoga({
     const authHeader = request.headers.get('authorization');
     return createContext(prisma, authHeader);
   },
+  cors: {
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+  },
   graphqlEndpoint: '/graphql',
   landingPage: true,
 });
