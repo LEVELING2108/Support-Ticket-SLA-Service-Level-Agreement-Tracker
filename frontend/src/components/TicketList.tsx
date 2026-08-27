@@ -91,7 +91,13 @@ export const TicketList: React.FC<TicketListProps> = ({
 
   const formatTimestamp = (dateStr: string) => {
     try {
-      const d = new Date(dateStr);
+      let d: Date;
+      if (!isNaN(Number(dateStr)) && !dateStr.includes('-') && !dateStr.includes('T')) {
+        d = new Date(Number(dateStr));
+      } else {
+        d = new Date(dateStr);
+      }
+      if (isNaN(d.getTime())) return dateStr;
       if (isToday(d)) {
         return format(d, 'HH:mm:ss');
       }

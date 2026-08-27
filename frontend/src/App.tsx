@@ -10,6 +10,7 @@ import { TicketDetailModal } from './components/TicketDetailModal';
 import { CreateTicketModal } from './components/CreateTicketModal';
 import { AuthModal } from './components/AuthModal';
 import { LandingPage } from './components/LandingPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { GET_DASHBOARD_QUERY, GET_HOLIDAYS_QUERY } from './graphql/operations';
 import { TicketDashboard, TicketStatus, SLAState, Holiday } from './types';
 import { Globe, Calendar } from 'lucide-react';
@@ -128,11 +129,16 @@ const MainAppContent: React.FC = () => {
         onTicketCreated={handleRefresh}
       />
 
-      <TicketDetailModal
-        ticketId={selectedTicketId}
-        onClose={() => setSelectedTicketId(null)}
-        onTicketUpdated={handleRefresh}
-      />
+      <ErrorBoundary
+        fallbackTitle="Unable to load ticket modal"
+        onReset={() => setSelectedTicketId(null)}
+      >
+        <TicketDetailModal
+          ticketId={selectedTicketId}
+          onClose={() => setSelectedTicketId(null)}
+          onTicketUpdated={handleRefresh}
+        />
+      </ErrorBoundary>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
@@ -141,10 +147,12 @@ const MainAppContent: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <UrqlProvider value={urqlClient}>
-      <AuthProvider>
-        <MainAppContent />
-      </AuthProvider>
-    </UrqlProvider>
+    <ErrorBoundary fallbackTitle="Application Error">
+      <UrqlProvider value={urqlClient}>
+        <AuthProvider>
+          <MainAppContent />
+        </AuthProvider>
+      </UrqlProvider>
+    </ErrorBoundary>
   );
 };

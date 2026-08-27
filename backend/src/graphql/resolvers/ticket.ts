@@ -1,7 +1,37 @@
 import { TicketResolvers, UserRole, SlaState } from '../generated/graphql';
 import { computeSLAInfo, Priority } from '../../services/sla/slaEngine';
 
+function toISOStringSafe(val: Date | string | number | null | undefined): string | null {
+  if (!val) return null;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val.toISOString();
+  if (typeof val === 'number') return new Date(val).toISOString();
+  if (!isNaN(Number(val)) && !val.includes('-') && !val.includes('T')) {
+    const numDate = new Date(Number(val));
+    return isNaN(numDate.getTime()) ? null : numDate.toISOString();
+  }
+  const strDate = new Date(val);
+  return isNaN(strDate.getTime()) ? null : strDate.toISOString();
+}
+
 export const ticketResolvers: TicketResolvers = {
+  createdAt: (parent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const p = parent as unknown as { createdAt: Date | string | number };
+    return toISOStringSafe(p.createdAt) || new Date().toISOString();
+  },
+
+  firstResponseAt: (parent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const p = parent as unknown as { firstResponseAt?: Date | string | number | null };
+    return toISOStringSafe(p.firstResponseAt);
+  },
+
+  resolvedAt: (parent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const p = parent as unknown as { resolvedAt?: Date | string | number | null };
+    return toISOStringSafe(p.resolvedAt);
+  },
+
   reporter: async (parent, _args, context) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const p = parent as unknown as { reporter?: import('@prisma/client').User; reporterId?: string };
@@ -11,7 +41,7 @@ export const ticketResolvers: TicketResolvers = {
         email: p.reporter.email,
         name: p.reporter.name,
         role: p.reporter.role as UserRole,
-        createdAt: p.reporter.createdAt.toISOString(),
+        createdAt: toISOStringSafe(p.reporter.createdAt) || new Date().toISOString(),
       };
     }
     const reporterId = p.reporterId;
@@ -26,7 +56,7 @@ export const ticketResolvers: TicketResolvers = {
       email: user.email,
       name: user.name,
       role: user.role as UserRole,
-      createdAt: user.createdAt.toISOString(),
+      createdAt: toISOStringSafe(user.createdAt) || new Date().toISOString(),
     };
   },
 
@@ -40,7 +70,7 @@ export const ticketResolvers: TicketResolvers = {
         email: p.assignee.email,
         name: p.assignee.name,
         role: p.assignee.role as UserRole,
-        createdAt: p.assignee.createdAt.toISOString(),
+        createdAt: toISOStringSafe(p.assignee.createdAt) || new Date().toISOString(),
       };
     }
     const assigneeId = p.assigneeId;
@@ -58,7 +88,7 @@ export const ticketResolvers: TicketResolvers = {
       email: user.email,
       name: user.name,
       role: user.role as UserRole,
-      createdAt: user.createdAt.toISOString(),
+      createdAt: toISOStringSafe(user.createdAt) || new Date().toISOString(),
     };
   },
 
@@ -70,13 +100,13 @@ export const ticketResolvers: TicketResolvers = {
         id: c.id,
         content: c.content,
         ticketId: c.ticketId,
-        createdAt: c.createdAt.toISOString(),
+        createdAt: toISOStringSafe(c.createdAt) || new Date().toISOString(),
         author: {
           id: c.author.id,
           email: c.author.email,
           name: c.author.name,
           role: c.author.role as UserRole,
-          createdAt: c.author.createdAt.toISOString(),
+          createdAt: toISOStringSafe(c.author.createdAt) || new Date().toISOString(),
         },
       }));
     }
@@ -89,13 +119,13 @@ export const ticketResolvers: TicketResolvers = {
       id: c.id,
       content: c.content,
       ticketId: c.ticketId,
-      createdAt: c.createdAt.toISOString(),
+      createdAt: toISOStringSafe(c.createdAt) || new Date().toISOString(),
       author: {
         id: c.author.id,
         email: c.author.email,
         name: c.author.name,
         role: c.author.role as UserRole,
-        createdAt: c.author.createdAt.toISOString(),
+        createdAt: toISOStringSafe(c.author.createdAt) || new Date().toISOString(),
       },
     }));
   },
@@ -103,22 +133,23 @@ export const ticketResolvers: TicketResolvers = {
   sla: async (parent, _args, context) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const p = parent as unknown as {
-      createdAt: Date | string;
+      createdAt: Date | string | number;
       priority: import('@prisma/client').Priority;
-      firstResponseAt?: Date | string | null;
-      resolvedAt?: Date | string | null;
+      firstResponseAt?: Date | string | number | null;
+      resolvedAt?: Date | string | number | null;
     };
 
     const holidays = await context.prisma.holiday.findMany();
     const holidayItems = holidays.map((h) => ({ date: h.date, name: h.name }));
 
-    const createdAt = typeof p.createdAt === 'string' ? new Date(p.createdAt) : p.createdAt;
-    const firstResponseAt =
-      typeof p.firstResponseAt === 'string'
-        ? new Date(p.firstResponseAt)
-        : p.firstResponseAt ?? null;
-    const resolvedAt =
-      typeof p.resolvedAt === 'string' ? new Date(p.resolvedAt) : p.resolvedAt ?? null;
+    const createdAtStr = toISOStringSafe(p.createdAt) || new Date().toISOString();
+    const createdAt = new Date(createdAtStr);
+
+    const firstResponseAtStr = toISOStringSafe(p.firstResponseAt);
+    const firstResponseAt = firstResponseAtStr ? new Date(firstResponseAtStr) : null;
+
+    const resolvedAtStr = toISOStringSafe(p.resolvedAt);
+    const resolvedAt = resolvedAtStr ? new Date(resolvedAtStr) : null;
 
     const result = computeSLAInfo(
       {
