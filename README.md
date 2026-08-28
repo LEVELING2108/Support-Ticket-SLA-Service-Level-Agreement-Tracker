@@ -51,11 +51,15 @@ In real-world enterprise customer support, Service Level Agreements (SLAs) are m
 [![Vite](https://img.shields.io/badge/Vite_5-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
-[![ESLint](https://img.shields.io/badge/ESLint-4B3263?style=flat-square&logo=eslint&logoColor=white)](https://eslint.org/)
+[![Live Render API](https://img.shields.io/badge/Render-Live_API_Active-46E3B7?style=flat-square&logo=render&logoColor=white)](https://support-ticket-tracker-sla.onrender.com/graphql)
+[![Deployment Guide](https://img.shields.io/badge/Deployment-Guide_Available-000000?style=flat-square&logo=gitbook&logoColor=white)](./DEPLOYMENT.md)
 
 </div>
 
 <br/>
+
+> 🌐 **Live Cloud Backend**: `https://support-ticket-tracker-sla.onrender.com/graphql`  
+> 📖 **Cloud Deployment Guide**: [`DEPLOYMENT.md`](./DEPLOYMENT.md)
 
 | Component | Technology | Description |
 |---|---|---|

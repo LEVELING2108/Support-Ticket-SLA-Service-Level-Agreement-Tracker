@@ -2,6 +2,9 @@
 
 This document provides a comprehensive technical walkthrough of the **Support Ticket & SLA Tracker** application for reviewers, covering architecture, SLA mathematics, database design, API design, testing, UI design, and operational tradeoffs.
 
+> 🌐 **Live Cloud Backend**: `https://support-ticket-tracker-sla.onrender.com/graphql`  
+> 📖 **Cloud Deployment Guide**: [`DEPLOYMENT.md`](./DEPLOYMENT.md)
+
 ---
 
 ## 1. Executive Summary & Objective
