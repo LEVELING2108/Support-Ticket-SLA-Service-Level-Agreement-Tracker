@@ -34,16 +34,20 @@ export class AuthService {
     const trimmedEmail = input.email?.trim().toLowerCase();
     const password = input.password;
 
-    if (!trimmedName || trimmedName.length < 2) {
-      throw createValidationError('Name must be at least 2 characters long');
+    if (!trimmedName || trimmedName.length < 2 || trimmedName.length > 100) {
+      throw createValidationError('Name must be between 2 and 100 characters long');
     }
 
-    if (!trimmedEmail || !EMAIL_REGEX.test(trimmedEmail)) {
-      throw createValidationError('Please provide a valid email address');
+    if (!trimmedEmail || trimmedEmail.length > 255 || !EMAIL_REGEX.test(trimmedEmail)) {
+      throw createValidationError('Please provide a valid email address (max 255 characters)');
     }
 
-    if (!password || password.length < 6) {
-      throw createValidationError('Password must be at least 6 characters long');
+    if (!password || password.trim().length < 6) {
+      throw createValidationError('Password must be at least 6 characters long (excluding whitespace)');
+    }
+
+    if (password.length > 72) {
+      throw createValidationError('Password cannot exceed 72 characters');
     }
 
     if (!input.role || !Object.values(UserRole).includes(input.role)) {

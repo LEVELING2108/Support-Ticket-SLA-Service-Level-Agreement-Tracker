@@ -15,7 +15,17 @@ export interface JWTPayload {
   role: UserRole;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key-burdenoff-support-tracker-2026';
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FATAL: JWT_SECRET environment variable must be set in production');
+    }
+    return 'super-secret-jwt-key-burdenoff-support-tracker-2026';
+  }
+  return secret;
+}
+
 const JWT_EXPIRES_IN = '7d';
 
 export function signToken(user: AuthUser): string {
@@ -25,12 +35,12 @@ export function signToken(user: AuthUser): string {
     name: user.name,
     role: user.role,
   };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
 }
 
 export function verifyToken(token: string): AuthUser | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const decoded = jwt.verify(token, getJwtSecret()) as JWTPayload;
     if (!decoded || !decoded.userId) {
       return null;
     }

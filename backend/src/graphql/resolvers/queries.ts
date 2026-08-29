@@ -85,13 +85,25 @@ export const queryResolvers: QueryResolvers = {
       whereClause.assigneeId = args.assigneeId;
     }
 
+    const ticketInclude = {
+      reporter: true,
+      assignee: true,
+      comments: {
+        include: { author: true },
+        orderBy: { createdAt: 'asc' as const },
+      },
+    };
+
     if (args.slaState) {
       const holidays = await context.prisma.holiday.findMany();
       const holidayItems = holidays.map((h) => ({ date: h.date, name: h.name }));
 
+      // Safe upper bound on in-memory SLA scan to prevent server DoS
       const allMatching = await context.prisma.ticket.findMany({
         where: whereClause,
         orderBy: { createdAt: 'desc' },
+        take: 300,
+        include: ticketInclude,
       });
 
       const filtered = allMatching.filter((t) => {
@@ -113,6 +125,8 @@ export const queryResolvers: QueryResolvers = {
         const cursorIndex = filtered.findIndex((t) => t.id === args.cursor);
         if (cursorIndex >= 0) {
           startIndex = cursorIndex + 1;
+        } else {
+          startIndex = filtered.length;
         }
       }
 
@@ -129,11 +143,12 @@ export const queryResolvers: QueryResolvers = {
       };
     }
 
-    // Standard cursor pagination
+    // Standard cursor pagination with eager-loaded relations
     const findArgs: Prisma.TicketFindManyArgs = {
       where: whereClause,
       take: take + 1,
       orderBy: { createdAt: 'desc' },
+      include: ticketInclude,
     };
 
     if (args.cursor) {
