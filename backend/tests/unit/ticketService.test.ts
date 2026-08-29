@@ -107,4 +107,74 @@ describe('Ticket Service & Status Transition Rules', () => {
       expect(UserRole.AGENT).toBe('AGENT');
     });
   });
+
+  describe('TicketService Input Validations', () => {
+    const fakePrisma = {
+      ticket: {
+        create: async () => ({ id: 'test-ticket-id' }),
+        findUnique: async () => null,
+      },
+      user: {
+        findUnique: async () => null,
+      },
+      comment: {
+        create: async () => ({ id: 'test-comment-id' }),
+      },
+    } as unknown as import('@prisma/client').PrismaClient;
+
+    const mockUser = {
+      id: 'usr-1',
+      email: 'reporter@test.com',
+      name: 'Reporter',
+      role: UserRole.REPORTER,
+    };
+
+    it('rejects createTicket with title < 3 characters', async () => {
+      try {
+        await import('../../src/services/ticket/ticketService').then((m) =>
+          m.TicketService.createTicket(
+            { title: 'ab', description: 'Valid description', priority: Priority.HIGH },
+            mockUser,
+            fakePrisma,
+          ),
+        );
+        expect.unreachable('Should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(AppGraphQLError);
+        expect((err as AppGraphQLError).extensions?.code).toBe('VALIDATION_ERROR');
+      }
+    });
+
+    it('rejects createTicket with description < 5 characters', async () => {
+      try {
+        await import('../../src/services/ticket/ticketService').then((m) =>
+          m.TicketService.createTicket(
+            { title: 'Valid Title', description: 'abc', priority: Priority.HIGH },
+            mockUser,
+            fakePrisma,
+          ),
+        );
+        expect.unreachable('Should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(AppGraphQLError);
+        expect((err as AppGraphQLError).extensions?.code).toBe('VALIDATION_ERROR');
+      }
+    });
+
+    it('rejects addComment with empty or whitespace-only content', async () => {
+      try {
+        await import('../../src/services/ticket/ticketService').then((m) =>
+          m.TicketService.addComment(
+            { ticketId: 'tkt-1', content: '   ' },
+            mockUser,
+            fakePrisma,
+          ),
+        );
+        expect.unreachable('Should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(AppGraphQLError);
+        expect((err as AppGraphQLError).extensions?.code).toBe('INVALID_COMMENT');
+      }
+    });
+  });
 });

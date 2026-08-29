@@ -123,4 +123,60 @@ describe('Authentication & Authorization Utilities', () => {
       }
     });
   });
+
+  describe('AuthService Validation Constraints', () => {
+    const fakePrisma = {
+      user: {
+        findUnique: async () => null,
+        create: async () => ({
+          id: 'usr-new',
+          name: 'Valid Name',
+          email: 'valid@example.com',
+          role: UserRole.REPORTER,
+          createdAt: new Date(),
+        }),
+      },
+    } as unknown as PrismaClient;
+
+    it('rejects passwords longer than 72 characters (bcrypt DoS limit)', async () => {
+      const { AuthService } = await import('../../src/services/auth/authService');
+      const longPassword = 'a'.repeat(73);
+
+      try {
+        await AuthService.register(
+          {
+            name: 'John Doe',
+            email: 'john@example.com',
+            password: longPassword,
+            role: UserRole.REPORTER,
+          },
+          fakePrisma,
+        );
+        expect.unreachable('Should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(AppGraphQLError);
+        expect((err as AppGraphQLError).message).toContain('72 characters');
+      }
+    });
+
+    it('rejects invalid email formats', async () => {
+      const { AuthService } = await import('../../src/services/auth/authService');
+
+      try {
+        await AuthService.register(
+          {
+            name: 'John Doe',
+            email: 'not-an-email',
+            password: 'validPassword123',
+            role: UserRole.REPORTER,
+          },
+          fakePrisma,
+        );
+        expect.unreachable('Should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(AppGraphQLError);
+        expect((err as AppGraphQLError).message).toContain('valid email');
+      }
+    });
+  });
 });
