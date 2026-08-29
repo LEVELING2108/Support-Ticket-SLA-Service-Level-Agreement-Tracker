@@ -511,6 +511,49 @@ query GetDashboardStats {
 }
 ```
 
+## 📸 Screenshots & UI Showcase
+
+```text
++----------------------------------------------------------------------------------------------------+
+| 🛡️ Burdenoff | Home                                              Alex Agent [AGENT]  [+ New Ticket] |
++----------------------------------------------------------------------------------------------------+
+|  ● Engine Active | Calendar: Standard Support hours only         🌐 Asia/Kolkata  📅 1 Holiday     |
++----------------------------------------------------------------------------------------------------+
+|  [ Open Tickets: 2 ]    [ In Progress: 1 ]    [ SLA At Risk: 1 ]    [ SLA Breached: 0 ]            |
++----------------------------------------------------------------------------------------------------+
+|  [ 🔍 Search tickets... ]   [ Status ▾ ]  [ Priority ▾ ]  [ SLA State ▾ ]  [ Assignee ▾ ]  [Reset]  |
++----------------------------------------------------------------------------------------------------+
+|  ID       PRIORITY   STATUS       TICKET DETAILS          1st RESPONSE SLA    RESOLUTION SLA       |
+|  TKT-104  URGENT     OPEN         Payment gateway timeout  ● 30m remaining     ● 3h 30m remaining  |
+|  TKT-103  HIGH       IN_PROGRESS  High CPU utilization     ✓ Met               ● 21h remaining     |
+|  TKT-102  MEDIUM     OPEN         Export to CSV issue      ● 6h remaining      ● 44h remaining     |
+|  TKT-101  LOW        OPEN         Update copyright year    ● 22h remaining     ● 68h remaining     |
++----------------------------------------------------------------------------------------------------+
+```
+
+---
+
+## ☁️ Deployment & Production Setup
+
+### 1. Backend on Render Cloud
+- **Root Directory**: `backend`
+- **Build Command**: `npm install --include=dev && npm run build`
+- **Start Command**: `npm start` (Runs migrations automatically: `prisma migrate deploy && node dist/server.js`)
+- **Environment Variables**:
+  - `NODE_ENV=production`
+  - `DATABASE_URL=<Managed PostgreSQL connection string>`
+  - `JWT_SECRET=<Random 32+ character key>`
+  - `BUSINESS_TIMEZONE=Asia/Kolkata`
+  - `CORS_ORIGIN=https://your-frontend-app.vercel.app`
+
+### 2. Frontend on Vercel
+- **Root Directory**: `frontend`
+- **Framework Preset**: `Vite`
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Environment Variables**:
+  - `VITE_GRAPHQL_ENDPOINT=https://your-backend-service.onrender.com/graphql`
+
 ---
 
 ## 🔮 How I'd Extend This
@@ -523,3 +566,22 @@ query GetDashboardStats {
    - Background worker monitoring tickets entering `AT_RISK` and dispatching webhooks to Slack/PagerDuty.
 4. **Real-Time GraphQL Subscriptions**:
    - WebSocket / SSE live updates pushing countdown ticks directly to open browser sessions.
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
+
+1. Fork the Project repository
+2. Create your Feature Branch (`git checkout -b feat/amazing-feature`)
+3. Commit your Changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the Branch (`git push origin feat/amazing-feature`)
+5. Open a Pull Request using the provided PR template
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more details.
+
