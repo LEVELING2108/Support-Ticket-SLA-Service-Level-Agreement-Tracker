@@ -342,6 +342,76 @@ bun --cwd frontend dev
 # Web application available at: http://localhost:5173
 ```
 
+## 📂 Project Structure
+
+```text
+Support-Ticket-SLA-Service-Level-Agreement-Tracker/
+├── .github/
+│   ├── workflows/
+│   │   └── ci.yml                 # Monorepo CI: lint, typecheck, build, test
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   └── feature_request.md
+│   └── PULL_REQUEST_TEMPLATE.md
+├── backend/
+│   ├── prisma/
+│   │   ├── migrations/            # Version-controlled Prisma schema migrations
+│   │   ├── schema.prisma          # Relational data models and indexes
+│   │   └── seed.ts                # Deterministic database seeder
+│   ├── src/
+│   │   ├── auth/                  # JWT token utilities, password hashing & guards
+│   │   ├── errors/                # Standardized AppGraphQLError hierarchy
+│   │   ├── graphql/               # Schema-first SDL, context & strongly-typed resolvers
+│   │   ├── services/              # Pure SLA engine, ticket lifecycle & auth services
+│   │   └── server.ts              # GraphQL Yoga HTTP server & graceful shutdown
+│   ├── tests/
+│   │   ├── unit/                  # 56 isolated unit tests for business logic
+│   │   └── integration/           # Real PostgreSQL integration lifecycle tests
+│   ├── codegen.yml                # GraphQL Code Generator configuration
+│   ├── package.json
+│   └── tsconfig.json
+├── frontend/
+│   ├── src/
+│   │   ├── components/            # UI Modals, Badges, Tables, Dashboard cards
+│   │   ├── context/               # AuthContext state and custom useAuth hook
+│   │   ├── graphql/               # Typed GraphQL query and mutation documents
+│   │   ├── lib/                   # URQL GraphQL client with Bearer auth exchange
+│   │   ├── types/                 # Frontend TypeScript interfaces
+│   │   ├── App.tsx                # Main view router and modal manager
+│   │   └── main.tsx
+│   ├── package.json
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
+│   └── vite.config.ts
+├── .env.example                   # Sanitized placeholder configuration template
+├── .gitignore                     # Production-ready git ignore rules
+├── docker-compose.yml             # PostgreSQL 16 Alpine container configuration
+├── render.yaml                    # Infrastructure-as-Code for Render Cloud deployment
+├── package.json                   # Monorepo workspace orchestration
+├── README.md                      # Complete system documentation
+└── LICENSE                        # MIT License
+```
+
+---
+
+## 📑 API Documentation & Specification
+
+| Method / Type | Operation | Authentication | Authorization | Input Validation | Main Purpose |
+|---|---|---|---|---|---|
+| `Query` | `me: User` | Yes (Bearer JWT) | Any logged-in user | None | Returns current user profile |
+| `Query` | `users(role: UserRole): [User!]!` | Yes (Bearer JWT) | `requireAuth` | Role enum validation | Lists users for agent assignment dropdowns |
+| `Query` | `holidays: [Holiday!]!` | No (Public) | Public | None | Lists calendar holidays for SLA engine |
+| `Query` | `ticket(id: ID!): Ticket` | Yes (Bearer JWT) | `requireAuth` | ID existence check | Fetches single ticket with comments & SLA info |
+| `Query` | `tickets(status, priority, assigneeId, slaState, take, cursor): TicketConnection!` | Yes (Bearer JWT) | `requireAuth` | Pagination bounds (1-50), enums | Paginated cursor list with eager-loaded relations |
+| `Query` | `dashboard: TicketDashboard!` | Yes (Bearer JWT) | `requireAuth` | None | Real-time ticket metric counters |
+| `Mutation` | `register(name, email, password, role): AuthPayload!` | No (Public) | Public | Name (2-100), Email regex, Password (6-72 chars) | Registers user, hashes password, returns JWT |
+| `Mutation` | `login(email, password): AuthPayload!` | No (Public) | Public | Email format, Password verification | Authenticates credentials, returns signed JWT |
+| `Mutation` | `createTicket(title, description, priority): Ticket!` | Yes (Bearer JWT) | `requireAuth` | Title (min 3), Desc (min 5), Priority enum | Creates support ticket in `OPEN` state |
+| `Mutation` | `assignTicket(ticketId, assigneeId): Ticket!` | Yes (Bearer JWT) | `requireAgent` | Ticket ID & Assignee ID existence, AGENT role | Assigns support staff to ticket |
+| `Mutation` | `changeTicketStatus(ticketId, status): Ticket!` | Yes (Bearer JWT) | `requireAgent` | Status enum, state machine allowed transitions | Updates lifecycle status; manages `resolvedAt` |
+| `Mutation` | `addComment(ticketId, content): Comment!` | Yes (Bearer JWT) | `requireAuth` | Ticket ID, non-empty comment content | Adds reply; triggers 1st response milestone |
+| `Mutation` | `resolveTicket(ticketId): Ticket!` | Yes (Bearer JWT) | `requireAgent` | Ticket ID existence, allowed transition | Resolves ticket and freezes resolution SLA |
+
 ---
 
 ## 🧪 Testing Strategy
@@ -349,18 +419,23 @@ bun --cwd frontend dev
 The test suite covers pure mathematics, services, and real PostgreSQL database integration tests:
 
 ```bash
-bun run --cwd backend test
+# Run backend unit tests
+npm run test:unit --workspace=backend
+# or with Bun:
+bun --cwd backend test:unit
 ```
 
-### Automated Test Coverage (52 / 52 Passed):
+### Automated Test Coverage (56 Unit Tests + Integration Tests Passed):
 - `tests/unit/businessHours.test.ts` (15 tests):
   - Snapping before/after hours, weekend day-walking, holiday skipping, exact minute boundary calculations.
 - `tests/unit/slaEngine.test.ts` (12 tests):
   - 75% boundary transition to `AT_RISK`, deadline overdue to `BREACHED`, milestone clock freezing.
-- `tests/unit/ticketService.test.ts` (9 tests):
-  - Status transition state machine validation, non-reporter first comment milestone stamping.
-- `tests/unit/auth.test.ts` (7 tests):
-  - Bcrypt hashing, token issuance, invalid credential handling, role authorization guards.
+- `tests/unit/ticketService.test.ts` (12 tests):
+  - Status transition state machine validation, title/desc length validation, non-reporter first comment milestone stamping.
+- `tests/unit/auth.test.ts` (9 tests):
+  - Bcrypt hashing, token issuance, invalid credential handling, role authorization guards, password length upper bound (72 chars).
+- `tests/unit/index.test.ts` (8 tests):
+  - AppError class hierarchy, standardized error codes, HTTP status mapping.
 - `tests/integration/ticketFlow.integration.test.ts` (8 tests):
   - Real PostgreSQL full lifecycle: register $\to$ create ticket $\to$ agent reply $\to$ resolve $\to$ SLA validation.
 

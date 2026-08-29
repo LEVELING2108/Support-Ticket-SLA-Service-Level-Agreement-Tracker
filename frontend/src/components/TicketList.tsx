@@ -83,10 +83,9 @@ export const TicketList: React.FC<TicketListProps> = ({
   const hasActiveFilters =
     !!statusFilter || !!slaStateFilter || !!priorityFilter || !!assigneeFilter || !!searchQuery;
 
-  const formatTicketId = (id: string, index: number) => {
-    // Generate clean readable ID like TKT-104 matching design
-    const shortNum = 104 - index;
-    return `TKT-${shortNum > 100 ? shortNum : id.substring(0, 3).toUpperCase()}`;
+  const formatTicketId = (id: string) => {
+    // Generate clean stable ID based on the ticket UUID
+    return `TKT-${id ? id.substring(0, 4).toUpperCase() : '0000'}`;
   };
 
   const formatTimestamp = (dateStr: string) => {
@@ -277,7 +276,7 @@ export const TicketList: React.FC<TicketListProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {filteredTickets.map((ticket, index) => (
+                {filteredTickets.map((ticket) => (
                   <tr
                     key={ticket.id}
                     onClick={() => onSelectTicket(ticket.id)}
@@ -285,7 +284,7 @@ export const TicketList: React.FC<TicketListProps> = ({
                   >
                     {/* ID */}
                     <td className="py-4 px-5 align-middle whitespace-nowrap font-mono text-xs text-stone-500 font-medium">
-                      {formatTicketId(ticket.id, index)}
+                      {formatTicketId(ticket.id)}
                     </td>
 
                     {/* Priority */}

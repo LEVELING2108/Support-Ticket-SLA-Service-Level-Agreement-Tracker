@@ -123,13 +123,20 @@ export class TicketService {
 
     const updateData: {
       status: TicketStatus;
-      resolvedAt?: Date;
+      resolvedAt?: Date | null;
     } = {
       status: targetStatus,
     };
 
-    if (targetStatus === TicketStatus.RESOLVED && !ticket.resolvedAt) {
-      updateData.resolvedAt = new Date();
+    if (targetStatus === TicketStatus.RESOLVED) {
+      if (!ticket.resolvedAt) {
+        updateData.resolvedAt = new Date();
+      }
+    } else if (targetStatus === TicketStatus.IN_PROGRESS || targetStatus === TicketStatus.OPEN) {
+      // If reopening a previously resolved ticket, reset resolvedAt so SLA resolution timer reactivates
+      if (ticket.resolvedAt) {
+        updateData.resolvedAt = null;
+      }
     }
 
     return prisma.ticket.update({

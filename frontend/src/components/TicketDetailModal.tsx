@@ -111,10 +111,11 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   };
 
   const handleAssign = async (assigneeId: string) => {
+    if (!assigneeId) return;
     setErrorMessage(null);
     const result = await executeAssign({
       ticketId,
-      assigneeId: assigneeId || null,
+      assigneeId,
     });
 
     if (result.error) {

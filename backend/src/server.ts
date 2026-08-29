@@ -17,13 +17,30 @@ export const yoga = createYoga({
     const authHeader = request.headers.get('authorization');
     return createContext(prisma, authHeader);
   },
-  cors: {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
-    credentials: true,
-    methods: ['GET', 'POST', 'OPTIONS'],
+  cors: (request) => {
+    const origin = request.headers.get('origin');
+    const allowedConfig = process.env.CORS_ORIGIN;
+
+    // If no CORS_ORIGIN is set or set to '*', allow all in development, but avoid insecure reflection with credentials
+    if (!allowedConfig || allowedConfig === '*') {
+      return {
+        origin: origin || '*',
+        credentials: true,
+        methods: ['GET', 'POST', 'OPTIONS'],
+      };
+    }
+
+    const allowedOrigins = allowedConfig.split(',').map((o) => o.trim());
+    const isAllowed = origin ? allowedOrigins.includes(origin) : false;
+
+    return {
+      origin: isAllowed ? (origin as string) : allowedOrigins[0] || '*',
+      credentials: isAllowed,
+      methods: ['GET', 'POST', 'OPTIONS'],
+    };
   },
   graphqlEndpoint: '/graphql',
-  landingPage: true,
+  landingPage: process.env.NODE_ENV !== 'production',
 });
 
 export const server = createServer(yoga);
@@ -107,6 +124,19 @@ async function autoSeedIfEmpty() {
     console.warn('Auto-seed warning:', err);
   }
 }
+
+// Graceful shutdown handling
+const handleShutdown = async (signal: string) => {
+  console.info(`Received ${signal}. Shutting down gracefully...`);
+  server.close(async () => {
+    await prisma.$disconnect();
+    console.info('Database disconnected. HTTP server closed.');
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+process.on('SIGINT', () => handleShutdown('SIGINT'));
 
 if (process.env.NODE_ENV !== 'test') {
   server.listen(port, '0.0.0.0', async () => {
