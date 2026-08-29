@@ -18,3 +18,9 @@ yarn-error.log*
 .DS_Store
 coverage/
 .turbo/
+
+# Offline Assignment Documents & Prompts
+*.pdf
+assignment*.md
+requirements.txt
+
