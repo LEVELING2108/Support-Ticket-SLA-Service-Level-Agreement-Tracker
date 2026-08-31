@@ -24,3 +24,13 @@ coverage/
 assignment*.md
 requirements.txt
 
+# Local Session Memory & Conversation History (Never committed to GitHub)
+*MEMORY*.md
+*CONVERSATION*.md
+*LOCAL_NOTES*.md
+*CHAT*.md
+*.local.md
+SESSION_MEMORY.md
+PROJECT_MEMORY.md
+
+
